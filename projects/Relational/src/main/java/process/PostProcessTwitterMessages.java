@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-public class PostProcessLexicalResource {
+public class PostProcessTwitterMessages {
 
     private String sentence;
     private List<String> tokens;
@@ -22,12 +22,12 @@ public class PostProcessLexicalResource {
             "&", "/", "(", ")", "|", "£", "+", "<", ">", "#", "§", "[", "]", "{", "}",
             "°", "*", "."};
 
-    public PostProcessLexicalResource() {
+    public PostProcessTwitterMessages() {
         this.sentence = null;
         this.tokens = null;
     }
 
-    public PostProcessLexicalResource(String sentence, List<String> tokens) {
+    public PostProcessTwitterMessages(String sentence, List<String> tokens) {
         this.sentence = sentence;
         this.tokens = tokens;
     }
