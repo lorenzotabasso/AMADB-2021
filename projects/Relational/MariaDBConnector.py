@@ -21,12 +21,10 @@ class MariaDBConnector:
     __db = None
     __cursor = None
 
-    def __init__(self, username, password):
+    def __init__(self):
         """
          Istanzia la classe.
         """
-        # self.username = username
-        # self.password = password
         super.__init__
 
     def __open_connection(self, database_name=None) -> None:
@@ -67,13 +65,30 @@ class MariaDBConnector:
         if self.__db is not None:
             self.__db.close()
 
-    # TODO: da continuare a sviluppare con il nuovo assett
-    def add_data(self, first_name, last_name) -> None:
-        try:
-            statement = "INSERT INTO employees (first_name,last_name) VALUES (%s, %s)"
-            data = (first_name, last_name)
-            self.__cursor.execute(statement, data)
-            self.__db.commit()
-            print("Successfully added entry to database")
-        except Exception as e:
-            print(f"Error adding entry to database: {e}")
+    '''
+       Crea il database e le sue tabelle secondo quanto definito in un file SQL.
+       '''
+
+    def create(self, sql_file_path: Path) -> None:
+        self.__open_connection()
+
+        self.__cursor.execute('DROP DATABASE IF EXISTS `{}`;'.format(self.DB_NAME))
+        self.__cursor.execute(
+            'CREATE DATABASE `{}` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin */;'.format(self.DB_NAME))
+        self.__db.database = self.DB_NAME
+
+        with open(sql_file_path, 'r') as sql_file:
+            statement = ''
+
+            for line in sql_file.readlines():
+                if line != '\n':
+                    statement += line.rstrip('\n')
+                else:
+                    self.__cursor.execute(statement)
+                    statement = ''
+
+            # Esecuzione dell'ultimo statement prima della fine del file.
+            self.__cursor.execute(statement)
+
+        self.__db.commit()
+        self.__close_connection()

@@ -33,6 +33,7 @@ if __name__ == "__main__":
 
     sentiment_path = Path('../..') / 'data' / 'lexical-resources' / 'Sentiments'
     anger_p = sentiment_path / "Anger" / "EmoSN_anger.txt"
+    output_p = Path('../..') / 'output'
 
     argv = sys.argv[1:]
     parser = OptionParser()
@@ -40,9 +41,8 @@ if __name__ == "__main__":
     parser.add_option("-i", "--input", help='input file', action="store", type="string", dest="input",
                       default=anger_p)
 
-    # TODO usare pathlib
     parser.add_option("-o", "--output", help='output directory', action="store", type="string", dest="output",
-                      default="../../output/Es1/")
+                      default=output_p / "Es1/")
 
     (options, args) = parser.parse_args()
 
