@@ -1,6 +1,6 @@
-version: '3.3'
+version: '3.5'
 
-volumes: 
+volumes:
     mongoshard1_volume:
     mongoshard2_volume:
     mongoconf_volume:
@@ -14,13 +14,15 @@ services:
         image: mongo
         command: mongod --shardsvr --replSet "mongors1" --dbpath /data/db --port ${MONGO_SHARD_PORT:-27017}
         restart: on-failure
-        expose: 
+        expose:
             - "${MONGO_SHARD_PORT:-27017}"
-        environment: 
-            TERM: xterm
+        environment:
+            TERM: bash
             TZ: ${TIMEZONE}
         volumes:
             - mongoshard1_volume:/data/db
+        entrypoint:
+            - docker-entrypoint.sh
 
     # Node storing the second shard
     mongoshard2:
@@ -28,12 +30,12 @@ services:
         image: mongo
         command: mongod --shardsvr --replSet "mongors2" --dbpath /data/db --port ${MONGO_SHARD_PORT:-27017}
         restart: on-failure
-        expose: 
+        expose:
             - "${MONGO_SHARD_PORT:-27017}"
-        environment: 
-            TERM: xterm
+        environment:
+            TERM: bash
             TZ: ${TIMEZONE}
-        volumes: 
+        volumes:
             - mongoshard2_volume:/data/db
 
     # Node storing the configuration for the cluster
@@ -47,8 +49,8 @@ services:
         restart: on-failure
         expose: 
             - "${MONGO_CONFIG_PORT:-27017}"
-        environment: 
-            TERM: xterm
+        environment:
+            TERM: bash
             TZ: ${TIMEZONE}
         volumes: 
             - mongoconf_volume:/data/db
@@ -56,17 +58,17 @@ services:
     # Node acting as the router for the cluster
     mongorouter:
         container_name: mongorouter
-        depends_on: 
+        depends_on:
             - mongoconf
         image: mongo
         command: mongos --configdb mongorsconf/mongoconf:${MONGO_CONFIG_PORT:-27017} --port ${MONGO_ROUTER_PORT:-27017} --bind_ip_all
         restart: on-failure
-        expose: 
+        expose:
             - "${MONGO_ROUTER_PORT:-27017}"
-        ports: 
+        ports:
             - ${MONGO_ROUTER_PORT:-27017}:${MONGO_ROUTER_PORT:-27017}
-        environment: 
-            TERM: xterm
+        environment:
+            TERM: bash
             TZ: ${TIMEZONE}
 
     mongo-express:
@@ -76,9 +78,11 @@ services:
         ports:
             - 8081:8081
         environment:
+            TERM: fish
+            TZ: ${TIMEZONE}
             ME_CONFIG_MONGODB_SERVER: "mongorouter"
             ME_CONFIG_MONGODB_PORT: ${MONGO_ROUTER_PORT:-27017}
-            
+
     # MARIA DB SERVICES
     # MariaDB container
     mariadb:
@@ -98,5 +102,8 @@ services:
         container_name: adminer
         image: adminer
         restart: on-failure
+        environment:
+            ADMINER_DEFAULT_SERVER: mariadb
+            ADMINER_DESIGN: galkaev
         ports:
             - ${ADMINER_PORT:-8080}:${ADMINER_PORT:-8080}
