@@ -160,3 +160,12 @@ fabric.properties
 # https://plugins.jetbrains.com/plugin/12206-codestream
 .idea/codestream.xml
 
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/.gitignore
+/.idea/Advanced_Database.iml
+/.idea/dataSources.xml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/sqldialects.xml
+/.idea/vcs.xml
+/projects/Relational/_trial_temp/_trial_marker
