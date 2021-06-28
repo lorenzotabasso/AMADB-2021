@@ -4,7 +4,7 @@ import nltk
 from pathlib import Path
 from optparse import OptionParser
 
-from projects.Relational.relationaldbhandler import RelationalDbHandler
+from relationaldbhandler import RelationalDbHandler
 
 
 class Preprocessor:
