@@ -1,5 +1,5 @@
 import time
-from projects.Relational.relationaldbhandler import RelationalDbHandler
+from relationaldbhandler import RelationalDbHandler
 from pathlib import Path
 
 if __name__ == '__main__':
