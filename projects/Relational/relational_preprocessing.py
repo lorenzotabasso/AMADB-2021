@@ -1,3 +1,4 @@
+import ast
 import csv
 import sys
 import nltk
@@ -5,24 +6,27 @@ from pathlib import Path
 from optparse import OptionParser
 import json
 
-from relationaldbhandler import RelationalDbHandler
+#from relationaldbhandler import RelationalDbHandler
 
 
 class Preprocessor:
     __PROCESSING_PATH = Path('../..') / 'data' / 'processing'
     __SLANG_WORDS_PATH = __PROCESSING_PATH / 'slang_words.json'
     __PUNCTUATION_PATH = __PROCESSING_PATH / 'punctuation.txt'
+    __EMOJIS_PATH = __PROCESSING_PATH / 'emoji2.json'
 
     __slang_words = {}
     __punctuation = []
     __stopwords = None
+    __emojis = {}
 
     def __init__(self):
-        self.__handler = RelationalDbHandler()
+        #self.__handler = RelationalDbHandler()
 
         self.__slang_words = self.__read_slang_words(self.__SLANG_WORDS_PATH)
         self.__punctuation = self.__read_punctuation(self.__PUNCTUATION_PATH)
         self.__stopwords = set(nltk.corpus.stopwords.words('english'))
+        self.__emojis = self.__read_emojis(self.__EMOJIS_PATH)
 
     @staticmethod
     def __read_slang_words(file_path: Path) -> dict:
@@ -51,6 +55,20 @@ class Preprocessor:
                 punctuation_list.append(line.strip())
 
         return punctuation_list
+
+
+    @staticmethod
+    def __read_emojis(file_path: Path) -> dict:
+        """
+        Legge il file JSON delle emojis e lo ritorna.
+        :param file_path: il path del file delle emoji words.
+        :return: un dizionario contenente le emoji.
+        """
+        with open(file_path) as json_file:
+            emoji_map = json.load(json_file)
+
+        return emoji_map
+
 
     def load_data(self, raw_data) -> list:
         """
@@ -85,6 +103,37 @@ class Preprocessor:
         print("SLANG: {0}".format(self.__slang_words))
         print("PUNCTUATION: {0}".format(self.__punctuation))
         print("STOPWORDS: {0}".format(self.__stopwords))
+
+
+    def preprocess_tweet(self, tweet):
+        '''
+        TODO:
+        1. Rimuovere USERNAME e URL
+        2. Eliminare Stop Words
+        3. Lemmatizzare parole -> match con risorse lessicali
+        4. Conteggiare presenza nei tweet delle parole associate a ogni sentimento
+        5. Memorizzare le parole nuove
+        '''
+
+        print(tweet)
+        for word in tweet.split():
+            if word == "USERNAME":
+                print("\tFound USERNAME, skipping", file=sys.stderr)
+                continue
+            elif word[0] == '#':
+                print("\tFound #, skipping", file=sys.stderr)
+                continue
+                # TODO: memorizzarlo nel DB
+            else:
+                # for emoji_category in self.__emojis:
+                #     if word in emoji_category:
+                #         # TODO: fare qualcosa
+                #         print(emoji_category, word)
+                #         continue
+                if word in self.__emojis:
+                    print("\tFound Emoji, skipping", file=sys.stderr)
+                    continue
+                    # TODO: memorizzarlo nel DB
 
 
 if __name__ == "__main__":

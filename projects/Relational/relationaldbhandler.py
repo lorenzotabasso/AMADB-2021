@@ -5,6 +5,8 @@ from pathlib import Path
 from sys import stderr
 import os
 
+from relational_preprocessing import Preprocessor
+
 
 class RelationalDbHandler:
     # env variables
@@ -164,12 +166,27 @@ class RelationalDbHandler:
     def load_twitter_messages(self, twitter_messages_dir) -> None:
         self.__open_connection(self.DB_NAME)
 
+        exit = False  # just for debug
+
         for file_name in os.listdir(twitter_messages_dir):
             file_path = twitter_messages_dir / file_name
             print("  {0}".format(file_name))
 
             if not os.path.isfile(file_path):
                 continue
+            elif exit:  # just for debug
+                break
+
+            prep = Preprocessor()
+            with open(file_path, 'r') as file:
+                counter = 0 # just for debug
+                for line in file.readlines():
+                    if counter <= 15:  # just for debug
+                        prep.preprocess_tweet(line)
+                        counter += 1
+                    else:  # just for debug
+                        exit = True
+                        break
 
         #     # Inserimento della risorsa lessicale.
         #     # Il nome della risorsa è dato dal nome del file meno l'estensione.
