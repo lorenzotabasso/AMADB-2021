@@ -1,3 +1,5 @@
+import sys
+
 import mysql.connector
 from pathlib import Path
 from sys import stderr
@@ -99,6 +101,7 @@ class RelationalDbHandler:
 
         for dir_name in os.listdir(dataset_dir):
             sentiment_dir = dataset_dir / dir_name
+            print("  {0}".format(dir_name))
 
             if not os.path.isdir(sentiment_dir):
                 continue
@@ -109,6 +112,7 @@ class RelationalDbHandler:
 
             for file_name in os.listdir(sentiment_dir):
                 file_path = sentiment_dir / file_name
+                print("    {0}".format(file_name))
 
                 if not os.path.isfile(file_path):
                     continue
@@ -152,7 +156,7 @@ class RelationalDbHandler:
                         try:
                             self.__cursor.execute(statement)
                         except mysql.connector.errors.Error:
-                            print('Trovato duplicato nel file {}: {}'.format(file_name, text))
+                            print('    Trovato duplicato nel file {}: {}'.format(file_name, text), file=sys.stderr)
 
         self.__db.commit()
         self.__close_connection()
