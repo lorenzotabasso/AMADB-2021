@@ -81,7 +81,7 @@ class Preprocessor:
         print("{0} ok!".format(len(preprocessed_data)))
 
     def get(self):
-        # Semplici print di controllo. TODO: rimuoverlo. 
+        # Semplici print di controllo. TODO: rimuoverlo.
         print("SLANG: {0}".format(self.__slang_words))
         print("PUNCTUATION: {0}".format(self.__punctuation))
         print("STOPWORDS: {0}".format(self.__stopwords))

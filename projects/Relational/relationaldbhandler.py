@@ -160,3 +160,58 @@ class RelationalDbHandler:
 
         self.__db.commit()
         self.__close_connection()
+
+    def load_twitter_messages(self, twitter_messages_dir) -> None:
+        self.__open_connection(self.DB_NAME)
+
+        for file_name in os.listdir(twitter_messages_dir):
+            file_path = twitter_messages_dir / file_name
+            print("  {0}".format(file_name))
+
+            if not os.path.isfile(file_path):
+                continue
+
+        #     # Inserimento della risorsa lessicale.
+        #     # Il nome della risorsa è dato dal nome del file meno l'estensione.
+        #     dataset_name = file_name.rsplit('.')[0]
+        #     statement = 'INSERT INTO `lexical_resource`(`name`, `sentiment_id`) VALUES("{}", "{}")' \
+        #         .format(dataset_name, dir_name.lower())
+        #     self.__cursor.execute(statement)
+        #
+        #     # Gestiamo l'id dell'ultima risorsa lessicale inserita
+        #     lexical_resource_id = self.__cursor.lastrowid
+        #
+        #     # Inserimento di tutte le parole della risorsa.
+        #     with open(file_path, 'r') as file:
+        #         for line in file.readlines():
+        #             # Rimozione spazi
+        #             text = line.strip()
+        #             # Scarto le parole composte.
+        #             if '_' in text:
+        #                 continue
+        #
+        #             statement = 'SELECT `id` FROM `token` WHERE `text` = "{}" LIMIT 1;'.format(text)
+        #             self.__cursor.execute(statement)
+        #             result = self.__cursor.fetchall()
+        #
+        #             if len(result) > 0:
+        #                 token_id = result[0][0]
+        #             else:
+        #                 statement = 'INSERT INTO `token`(`type`, `text`) VALUES({}, "{}");' \
+        #                     .format(self.WORD_TYPE, text)
+        #                 self.__cursor.execute(statement)
+        #                 # discorso analogo per il token id
+        #                 token_id = self.__cursor.lastrowid
+        #
+        #             statement = 'INSERT INTO `in_resource`(`token_id`, `lexical_resource_id`) VALUES({}, {});' \
+        #                 .format(token_id, lexical_resource_id)
+        #
+        #             # Gestione degli errori in caso di duplicati presenti nei dataset.
+        #             try:
+        #                 self.__cursor.execute(statement)
+        #             except mysql.connector.errors.Error:
+        #                 print('  Trovato duplicato nel file {}: {}'.format(file_name, text), file=sys.stderr)
+        #
+        # self.__db.commit()
+        self.__close_connection()
+
