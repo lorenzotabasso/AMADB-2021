@@ -1,5 +1,6 @@
 import sys
 
+import emoji
 import mysql.connector
 from pathlib import Path
 from sys import stderr
@@ -179,14 +180,18 @@ class RelationalDbHandler:
 
             prep = Preprocessor()
             with open(file_path, 'r') as file:
-                counter = 0 # just for debug
+                counter = 0  # just for debug
+                emoji_dict = {}
                 for line in file.readlines():
                     if counter <= 15:  # just for debug
-                        prep.preprocess_tweet(line)
+                        # prep.preprocess_tweet(line, emoji_dict)
+                        self.preprocess_tweet_aux(line, emoji_dict)
                         counter += 1
                     else:  # just for debug
                         exit = True
                         break
+
+                print(emoji_dict)
 
         #     # Inserimento della risorsa lessicale.
         #     # Il nome della risorsa è dato dal nome del file meno l'estensione.
@@ -232,3 +237,28 @@ class RelationalDbHandler:
         # self.__db.commit()
         self.__close_connection()
 
+    def preprocess_tweet_aux(self, tweet, emoji_dict):
+        print(tweet)
+        for word in tweet.split():
+            if word == "USERNAME":
+                print("\tFound USERNAME, skipping", file=sys.stderr)
+                continue
+            elif word[0] == '#':
+                print("\tFound #, skipping", file=sys.stderr)
+                continue
+                # TODO: memorizzarlo nel DB
+            else:
+                # for emoji_category in self.__emojis:
+                #     if word in emoji_category:
+                #         # TODO: fare qualcosa
+                #         print(emoji_category, word)
+                #         continue
+
+                if word in emoji.UNICODE_EMOJI['en']:
+                    print("\tFound Emoji, skipping", file=sys.stderr)
+                    if word in emoji_dict:
+                        emoji_dict[word] += 1
+                    else:
+                        emoji_dict[word] += 1
+                    continue
+                    # TODO: memorizzarlo nel DB

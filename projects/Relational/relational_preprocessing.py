@@ -1,6 +1,8 @@
 import ast
 import csv
 import sys
+
+import emoji
 import nltk
 from pathlib import Path
 from optparse import OptionParser
@@ -130,7 +132,7 @@ class Preprocessor:
                 #         # TODO: fare qualcosa
                 #         print(emoji_category, word)
                 #         continue
-                if word in self.__emojis:
+                if word in emoji.UNICODE_EMOJI['en']:
                     print("\tFound Emoji, skipping", file=sys.stderr)
                     continue
                     # TODO: memorizzarlo nel DB
