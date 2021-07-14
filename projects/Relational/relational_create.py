@@ -4,7 +4,7 @@ import time
 from relationaldbhandler import RelationalDbHandler
 
 if __name__ == "__main__":
-    data_path = Path('.') / 'data'
+    data_path = Path('../..') / 'data'
     
     db_creator = RelationalDbHandler()
 

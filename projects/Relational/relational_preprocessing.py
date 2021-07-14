@@ -9,7 +9,7 @@ import nltk
 
 
 class Preprocessor:
-    __PROCESSING_PATH = Path('.') / 'data' / 'processing'
+    __PROCESSING_PATH = Path('../..') / 'data' / 'processing'
     __SLANG_WORDS_PATH = __PROCESSING_PATH / 'slang_words.json'
     __PUNCTUATION_PATH = __PROCESSING_PATH / 'punctuation.txt'
 
@@ -363,10 +363,8 @@ class Preprocessor:
 
 
 if __name__ == "__main__":
-    sentiment_path = Path('.') / 'data' / 'lexical-resources' / 'Sentiments'
-    anger_p = sentiment_path / "Anger" / "EmoSN_anger.txt"
-    dataset_dir = Path('.') / 'data' / 'twitter-messages'
-    output_p = Path('.') / 'output'
+    dataset_dir = Path('../..') / 'data' / 'twitter-messages'
+    output_p = Path('../..') / 'output'
 
     prep = Preprocessor()
     # prep.get()  # TODO: debug toglierlo
@@ -375,6 +373,7 @@ if __name__ == "__main__":
     print('Inserimento dei twitter messages.')
     
     total_time = 0
+    current_sentiment_name = ''
 
     for file_name in os.listdir(dataset_dir):
         file_path = dataset_dir / file_name
@@ -383,11 +382,11 @@ if __name__ == "__main__":
         print(f'Sto lavorando sul file: {file_name}')
 
         for sentiment in prep.get_sentiments():
-            if(sentiment in file_name):
+            if sentiment in file_name:
                 current_sentiment_name = sentiment
                 break
 
-        print('Preprocessing delle frasi del sentimento {}'.format(
+        print('\tPreprocessing delle frasi del sentimento {}'.format(
             current_sentiment_name))
 
         with open(file_path, 'r', encoding='utf8') as file:
@@ -397,11 +396,11 @@ if __name__ == "__main__":
                 count += 1
                 prep.preprocess(line, current_sentiment_name)
 
-            print('Scrittura su database.')
+            print('\tScrittura su database.')
             # prep.write_to_db()
 
         end = time.time()
-        print('Processamento del file {} compiuto in {:.2f} secondi'.format(
+        print('\tProcessamento del file {} compiuto in {:.2f} secondi'.format(
             file_name, end - start))
         total_time += end - start
 

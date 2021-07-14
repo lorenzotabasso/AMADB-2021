@@ -371,7 +371,8 @@ class RelationalDbHandler:
 
         # decode the byte string from the DB and turn it in to a character (Unicode) string.
         encoding = 'utf-8'
-        tokens_list = [(r[0].decode(encoding), r[1]) for r in result]
+        #tokens_list = [(r[0].decode(encoding), r[1]) for r in result]
+        tokens_list = [(r[0], r[1]) for r in result]
 
         for (token_text, token_id) in tokens_list:
             tokens_map.update({token_text: token_id})
