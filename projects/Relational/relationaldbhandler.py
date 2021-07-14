@@ -55,7 +55,8 @@ class RelationalDbHandler:
 
         self.__cursor = self.__db.cursor()
 
-        statement = 'SET GLOBAL max_allowed_packet={};'.format(self.MAX_ALLOWED_PACKET)
+        statement = 'SET GLOBAL max_allowed_packet={};'.format(
+            self.MAX_ALLOWED_PACKET)
         self.__cursor.execute(statement)
 
     def __close_connection(self) -> None:
@@ -76,7 +77,8 @@ class RelationalDbHandler:
         """
         self.__open_connection()
 
-        self.__cursor.execute('DROP DATABASE IF EXISTS `{}`;'.format(self.DB_NAME))
+        self.__cursor.execute(
+            'DROP DATABASE IF EXISTS `{}`;'.format(self.DB_NAME))
         self.__cursor.execute(
             'CREATE DATABASE `{}` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin */;'.format(self.DB_NAME))
         self.__db.database = self.DB_NAME
@@ -113,7 +115,8 @@ class RelationalDbHandler:
                 continue
 
             # Inserimento del sentimento.
-            statement = 'INSERT INTO `sentiment`(`name`) VALUES(\"{}\")'.format(dir_name.lower())
+            statement = 'INSERT INTO `sentiment`(`name`) VALUES(\"{}\")'.format(
+                dir_name.lower())
             self.__cursor.execute(statement)
 
             for file_name in os.listdir(sentiment_dir):
@@ -141,9 +144,10 @@ class RelationalDbHandler:
                         # Scarto le parole composte.
                         if '_' in text:
                             continue
-                        
+
                         # query sul db per recuperare, se presente il token
-                        statement = 'SELECT `id` FROM `token` WHERE `text` = "{}" LIMIT 1;'.format(text)
+                        statement = 'SELECT `id` FROM `token` WHERE `text` = "{}" LIMIT 1;'.format(
+                            text)
                         self.__cursor.execute(statement)
                         result = self.__cursor.fetchall()
 
@@ -165,15 +169,15 @@ class RelationalDbHandler:
                         try:
                             self.__cursor.execute(statement)
                         except mysql.connector.errors.Error:
-                            print('    Trovato duplicato nel file {}: {}'.format(file_name, text), file=sys.stderr)
+                            print('    Trovato duplicato nel file {}: {}'.format(
+                                file_name, text), file=sys.stderr)
 
         self.__db.commit()
         self.__close_connection()
-    
 
-    def read_emojis(self, file_path: Path) -> dict:
+    def __read_emo_json(self, file_path: Path) -> dict:
         """
-        Legge il file JSON delle emojis e lo ritorna.
+        Legge il file JSON delle emojis/emoticons e lo ritorna.
         :param file_path: il path del file delle emoji words.
         :return: un dizionario contenente le emoji.
         """
@@ -181,10 +185,46 @@ class RelationalDbHandler:
             emoji_map = json.load(json_file)
 
         return emoji_map
-        
-    def load_emoticon(self, token_type: int, file_path: Path) -> None:
-        # TODO
-        pass
+
+    def load_emoticon_or_emoij(self, token_type: int, file_path: Path) -> None:
+        """
+        Carica le emoticon o le emoji a partire dal file in input con alcuni dettagli; 
+        la distinzione tra emoticon ed emoji è data da token_type
+        :param token_type: tipologia di token che lo identifica, vedi ddl schema e costanti della classe
+        :type token_type: int
+        :param file_path: percorso del file json
+        :type file_path: Path
+        """        """"""
+        self.__open_connection(self.DB_NAME)
+
+        emo = self.__read_emo_json(file_path)
+
+        for key in emo:
+            if token_type == self.EMOJI_TYPE:
+                # Caso delle emoji: Python interpreta quanto letto come sequenza di caratteri UTF-8. Ma quelli dati dalla professoressa
+                # sono code-point unicode in formato ASCII escape.
+                # Ecco quindi il file json: converto quindi la stringa in rappresentazione binaria trattandola come ASCII,
+                # per poi riconvertirla in UTF-8
+                # Ho così già caratteri delle emoji e non più la loro rappresentazione tramite ASCII escape.
+                pass
+            else:
+                # Caso delle emoticon: devo sostituire il carattere '\' con '\\' per evitare che il DBMS lo tratti come carattere di escape.
+                key = key.replace('\\', '\\\\')
+
+            # Controllo che non sia presente nel db per evitare i DUPLICATI
+            statement = 'SELECT `id` FROM `token` WHERE `type` = {} AND `text` = "{}" LIMIT 1;'.format(
+                token_type, key)
+            self.__cursor.execute(statement)
+            result = self.__cursor.fetchall()
+
+            if len(result) <= 0:
+                # Debug print(f"Vado ad inserire il l'emo {key}")
+                statement = 'INSERT INTO `token`(`type`, `text`) VALUES({}, "{}");'.format(
+                    token_type, key)
+                self.__cursor.execute(statement)
+
+        self.__db.commit()
+        self.__close_connection()
 
     """
     Query methods for internal use
@@ -205,7 +245,6 @@ class RelationalDbHandler:
         self.__close_connection()
 
         return [r[0] for r in result]
-    
 
     def get_max_token_id(self) -> int:
         """
@@ -224,7 +263,6 @@ class RelationalDbHandler:
             return 0
         else:
             return result[0][0]
-        
 
     def get_max_tweet_id(self) -> int:
         """
@@ -243,7 +281,6 @@ class RelationalDbHandler:
             return 0
         else:
             return result[0][0]
-        
 
     def get_max_contained_in_id(self) -> int:
         """
@@ -251,7 +288,7 @@ class RelationalDbHandler:
         :rtype: int
         """
         self.__open_connection(self.DB_NAME)
-        
+
         statement = 'SELECT max(`id`) FROM `contained_in`'
         self.__cursor.execute(statement)
         result = self.__cursor.fetchall()
@@ -262,9 +299,9 @@ class RelationalDbHandler:
             return 0
         else:
             return result[0][0]
-        
 
-    # TODO Rimuovere questi metodi    
+    # TODO Rimuovere questi metodi
+
     def load_twitter_messages(self, twitter_messages_dir) -> None:
         self.__open_connection(self.DB_NAME)
 

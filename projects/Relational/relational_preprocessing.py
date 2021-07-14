@@ -1,3 +1,4 @@
+from relationaldbhandler import RelationalDbHandler
 import json
 import os
 import re
@@ -13,14 +14,10 @@ nltk.download('averaged_perceptron_tagger')
 nltk.download('universal_tagset')
 
 
-from relationaldbhandler import RelationalDbHandler
-
-
 class Preprocessor:
     __PROCESSING_PATH = Path('.') / 'data' / 'processing'
     __SLANG_WORDS_PATH = __PROCESSING_PATH / 'slang_words.json'
     __PUNCTUATION_PATH = __PROCESSING_PATH / 'punctuation.txt'
-    __EMOJIS_PATH = __PROCESSING_PATH / 'emoji2.json'
 
     # Collection of dictonary for data
     __emojis = {}
@@ -48,13 +45,13 @@ class Preprocessor:
     def __init__(self):
         self.__handler = RelationalDbHandler()
 
-        # self.__emojis = self.__read_emojis(self.__EMOJIS_PATH)
-
         # Read tokens from the db
-        self.__emoticons = self.__handler.read_tokens(self.__handler.EMOTICON_TYPE)
+        self.__emoticons = self.__handler.read_tokens(
+            self.__handler.EMOTICON_TYPE)
         self.__emojis = self.__handler.read_tokens(self.__handler.EMOJI_TYPE)
         self.__words = self.__handler.read_tokens(self.__handler.WORD_TYPE)
-        self.__hashtags = self.__handler.read_tokens(self.__handler.HASHTAG_TYPE)
+        self.__hashtags = self.__handler.read_tokens(
+            self.__handler.HASHTAG_TYPE)
 
         self.__data = {
             self.__DATA_TWEETS: [],
@@ -105,18 +102,6 @@ class Preprocessor:
         return punctuation_list
 
     @staticmethod
-    def __read_emojis(file_path: Path) -> dict:
-        """
-        Legge il file JSON delle emojis e lo ritorna.
-        :param file_path: il path del file delle emoji words.
-        :return: un dizionario contenente le emoji.
-        """
-        with open(file_path) as json_file:
-            emoji_map = json.load(json_file)
-
-        return emoji_map
-
-    @staticmethod
     def load_data(self, raw_data) -> list:
         """
         Legge raw_data una linea per volta e la carica in una lista.
@@ -148,13 +133,14 @@ class Preprocessor:
         :type sentiment: str
         """
         self.__max_tweet_id += 1
-        self.__data[self.__DATA_TWEETS].append((self.__max_tweet_id, sentiment))
+        self.__data[self.__DATA_TWEETS].append(
+            (self.__max_tweet_id, sentiment))
 
     def __add_data_token(self, type: int, text: str) -> None:
         self.__max_token_id += 1
         self.__data[self.__DATA_TOKENS].append(
             (self.__max_token_id, type, text))
-        
+
         # Aggiungo il token al dizionario appropriato sfruttando le costanti definite nel dbhandler
         if type == self.__handler.WORD_TYPE:
             self.__words[text] = self.__max_token_id
@@ -164,10 +150,11 @@ class Preprocessor:
             self.__emojis[text] = self.__max_token_id
         elif type == self.__handler.HASHTAG_TYPE:
             self.__hashtags[text] = self.__max_token_id
-    
+
     def __add_data_contained_in(self, tweet_id: int, token_id: int, pos=None) -> None:
         self.__max_contained_in_id += 1
-        self.__data[self.__DATA_CONTAINED_INS].append((self.__max_contained_in_id, tweet_id, token_id, pos))
+        self.__data[self.__DATA_CONTAINED_INS].append(
+            (self.__max_contained_in_id, tweet_id, token_id, pos))
 
     """
     Preprocessing helper methods
@@ -186,7 +173,6 @@ class Preprocessor:
         msg = msg.replace("USERNAME", "")
 
         return msg
-
 
     def __process_hashtag(self, msg: str) -> str:
         """
@@ -213,7 +199,6 @@ class Preprocessor:
 
         return msg
 
-
     def __subsistute_slang_words(self, msg: str) -> str:
         """
         Rimpiazza una slang word con il suo corrispettivo in inglese
@@ -226,7 +211,6 @@ class Preprocessor:
             if word in self.__slang_words:
                 msg = msg.replace(word, self.__slang_words.get(word))
         return msg
-
 
     def __clean_punctuation(self, msg: str) -> str:
         """
@@ -241,7 +225,6 @@ class Preprocessor:
                 print(char)
                 msg = msg.replace(char, '')
         return msg
-    
 
     def __words_from_msg(self, msg: str) -> list:
         """
@@ -254,11 +237,15 @@ class Preprocessor:
         """
         lemmatizer = nltk.WordNetLemmatizer()
 
-        tokenized_words = nltk.word_tokenize(msg) # tokenization
-        tagged_words = nltk.pos_tag(tokenized_words, tagset='universal') # pos tagging
-        tagged_words = [(w[0].lower(), w[1]) for w in tagged_words] # lower case 
-        lemmatized_tagged_words = [(lemmatizer.lemmatize(w[0]), w[1]) for w in tagged_words] # lemmatizer
-        filtered_words = [w for w in lemmatized_tagged_words if not w[0] in self.__stopwords] # remove stopwords
+        tokenized_words = nltk.word_tokenize(msg)  # tokenization
+        tagged_words = nltk.pos_tag(
+            tokenized_words, tagset='universal')  # pos tagging
+        tagged_words = [(w[0].lower(), w[1])
+                        for w in tagged_words]  # lower case
+        lemmatized_tagged_words = [(lemmatizer.lemmatize(
+            w[0]), w[1]) for w in tagged_words]  # lemmatizer
+        filtered_words = [w for w in lemmatized_tagged_words if not w[0]
+                          in self.__stopwords]  # remove stopwords
 
         return filtered_words
 
@@ -372,8 +359,9 @@ if __name__ == "__main__":
             if(sentiment in file_name):
                 current_sentiment_name = sentiment
                 break
-    
-        print('Prepocessing delle frasi del sentimento {}'.format(current_sentiment_name))
+
+        print('Prepocessing delle frasi del sentimento {}'.format(
+            current_sentiment_name))
 
         with open(file_path, 'r', encoding='utf8') as file:
             count = 1
@@ -381,4 +369,3 @@ if __name__ == "__main__":
                 print('{}:\t{}'.format(count, line))
                 count += 1
                 prep.preprocess(line, current_sentiment_name)
-                
