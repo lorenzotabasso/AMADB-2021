@@ -137,11 +137,18 @@ class Preprocessor:
             (self.__max_tweet_id, sentiment))
 
     def __add_data_token(self, type: int, text: str) -> None:
+        """
+        Aggiorno la mia mappa di token:token_id
+        :param type: token_type
+        :type type: int
+        :param text: token da processare
+        :type text: str
+        """
         self.__max_token_id += 1
         self.__data[self.__DATA_TOKENS].append(
             (self.__max_token_id, type, text))
 
-        # Aggiungo il token al dizionario appropriato sfruttando le costanti definite nel dbhandler
+        # Aggiungo il token al dizionario/mappa appropriato sfruttando le costanti definite nel dbhandler
         if type == self.__handler.WORD_TYPE:
             self.__words[text] = self.__max_token_id
         elif type == self.__handler.EMOTICON_TYPE:
@@ -152,6 +159,15 @@ class Preprocessor:
             self.__hashtags[text] = self.__max_token_id
 
     def __add_data_contained_in(self, tweet_id: int, token_id: int, pos=None) -> None:
+        """[summary]
+
+        :param tweet_id: [description]
+        :type tweet_id: int
+        :param token_id: [description]
+        :type token_id: int
+        :param pos: [description], defaults to None
+        :type pos: [type], optional
+        """        """"""
         self.__max_contained_in_id += 1
         self.__data[self.__DATA_CONTAINED_INS].append(
             (self.__max_contained_in_id, tweet_id, token_id, pos))
@@ -199,6 +215,50 @@ class Preprocessor:
 
         return msg
 
+    def __process_emo(self, msg:str) -> str:
+        """
+        Verifico se word è una emoticon/emoij conosciuta
+        Agisco di conseguenza con il caso emoij più complicato
+        :param msg: messaggio da analizzare
+        :type msg: str
+        :return: messaggio ripulito da emoji ed emoticons
+        :rtype: str
+        """
+        for word in msg.split(' '):
+            is_emoji_or_emoticon = False
+
+            # Verifico se word è una emoticon conosciuta; se sì,
+            # la aggiungo alla relazione contained_in
+            emo_id = self.__emoticons.get(word)
+
+            if emo_id != None:
+                is_emoji_or_emoticon = True
+            else:
+                emo_id = self.__emojis.get(word)
+
+                if emo_id != None:
+                    is_emoji_or_emoticon = True
+                # Controllo se word è una emoji. Alcune emoji sono formate da più
+                # emoji unite dal carattere ZWJ (zero width join) e alcune hanno
+                # in coda un carattere di selezione per mostrarle come disegno
+                # o rappresentazione grafica. Ad oggi, le combinazioni massime di
+                # emoji sono di 7 caratteri. 169 e 129750 sono i limiti entro cui
+                # sono contenute le emoji allo stato attuale di Unicode.
+                elif len(word) > 0 and \
+                    len(word) <= 7 and \
+                    ord(word[0]) >= 169 and \
+                    ord(word[0]) <= 129750:
+
+                    self.__add_data_token(self.__handler.EMOJI_TYPE, word)
+                    emo_id = self.__max_token_id
+                    is_emoji_or_emoticon = True
+            
+            if is_emoji_or_emoticon:
+                msg = msg.replace(word, "") # rimozione emoji
+                self.__add_data_contained_in(self.__max_tweet_id, emo_id, None) # update dict
+
+        return msg
+
     def __subsistute_slang_words(self, msg: str) -> str:
         """
         Rimpiazza una slang word con il suo corrispettivo in inglese
@@ -222,7 +282,7 @@ class Preprocessor:
         """
         for char in msg:
             if char in self.__punctuation:
-                print(char)
+                # print(char)
                 msg = msg.replace(char, '')
         return msg
 
@@ -237,15 +297,20 @@ class Preprocessor:
         """
         lemmatizer = nltk.WordNetLemmatizer()
 
-        tokenized_words = nltk.word_tokenize(msg)  # tokenization
+        # tokenization
+        tokenized_words = nltk.word_tokenize(msg)
+        # pos tagging
         tagged_words = nltk.pos_tag(
-            tokenized_words, tagset='universal')  # pos tagging
+            tokenized_words, tagset='universal')
+        # lowering cases
         tagged_words = [(w[0].lower(), w[1])
-                        for w in tagged_words]  # lower case
+                        for w in tagged_words]
+        # lemmatizzazion
         lemmatized_tagged_words = [(lemmatizer.lemmatize(
-            w[0]), w[1]) for w in tagged_words]  # lemmatizer
+            w[0]), w[1]) for w in tagged_words]
+        # remove stopwords
         filtered_words = [w for w in lemmatized_tagged_words if not w[0]
-                          in self.__stopwords]  # remove stopwords
+                          in self.__stopwords]
 
         return filtered_words
 
@@ -275,6 +340,7 @@ class Preprocessor:
         TODO:
         ✓ Rimuovere USERNAME e URL
         ✓ Eliminare Stop Words
+        ✓ Gestire le emoij/Emoticons
         1. Lemmatizzare parole -> match con risorse lessicali
         2. Conteggiare presenza nei tweet delle parole associate a ogni sentimento
         3. Memorizzare le parole nuove
@@ -288,7 +354,7 @@ class Preprocessor:
         msg = self.__process_hashtag(msg)
 
         # remove emoticons and emojis and load them into db
-        # msg = self.__process_emo(msg) TODO
+        msg = self.__process_emo(msg)
 
         # substitute slang words and acronyms from the msg
         msg = self.__subsistute_slang_words(msg)
@@ -298,44 +364,12 @@ class Preprocessor:
         # remove puntuaction from the msg
         msg = self.__clean_punctuation(msg)
 
-        print(msg)
-
         # tokenization, pos tagging, lemmatization, lower case and stop words elimination
         filtered_words = self.__words_from_msg(msg)
 
         print(filtered_words)
 
-        # TODO Insert words
-
-    def preprocess_tweet(self, tweet):
-        '''
-        TODO:
-        1. Rimuovere USERNAME e URL
-        2. Eliminare Stop Words
-        3. Lemmatizzare parole -> match con risorse lessicali
-        4. Conteggiare presenza nei tweet delle parole associate a ogni sentimento
-        5. Memorizzare le parole nuove
-        '''
-
-        print(tweet)
-        for word in tweet.split():
-            if word == "USERNAME":
-                print("\tFound USERNAME, skipping", file=sys.stderr)
-                continue
-            elif word[0] == '#':
-                print("\tFound #, skipping", file=sys.stderr)
-                continue
-                # TODO: memorizzarlo nel DB
-            else:
-                # for emoji_category in self.__emojis:
-                #     if word in emoji_category:
-                #         # TODO: fare qualcosa
-                #         print(emoji_category, word)
-                #         continue
-                if word in emoji.UNICODE_EMOJI['en']:
-                    print("\tFound Emoji, skipping", file=sys.stderr)
-                    continue
-                    # TODO: memorizzarlo nel DB
+        # TODO Insert words in Database
 
 
 if __name__ == "__main__":

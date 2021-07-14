@@ -177,7 +177,7 @@ class RelationalDbHandler:
 
     def __read_emo_json(self, file_path: Path) -> dict:
         """
-        Legge il file JSON delle emojis/emoticons e lo ritorna.
+        Legge il file JSON delle emojis/emoticons
         :param file_path: il path del file delle emoji words.
         :return: un dizionario contenente le emoji.
         """
@@ -227,7 +227,7 @@ class RelationalDbHandler:
         self.__close_connection()
 
     """
-    Query methods for internal use
+    Query methods for internal use. Con ID massimo si intende il maggiore (ultimo)
     """
 
     def get_sentiments(self) -> list:
@@ -300,59 +300,27 @@ class RelationalDbHandler:
         else:
             return result[0][0]
 
-    # TODO Rimuovere questi metodi
+    def read_tokens(self, token_type: int):
+        """
+        Restituisce una mappa di token:token_id in base al tipo specificato dal parametro token_type
+        :param token_type: identificativo della tipologia di token
+        :type token_type: int
+        :return: mappa token:token_id
+        :rtype: dict
+        """
+        tokens_map = {}
 
-    def load_twitter_messages(self, twitter_messages_dir) -> None:
         self.__open_connection(self.DB_NAME)
-
-        exit = False  # just for debug
-
-        for file_name in os.listdir(twitter_messages_dir):
-            file_path = twitter_messages_dir / file_name
-            print("  {0}".format(file_name))
-
-            if not os.path.isfile(file_path):
-                continue
-            elif exit:  # just for debug
-                break
-
-            with open(file_path, 'r') as file:
-                counter = 0  # just for debug
-                emoji_dict = {}
-                for line in file.readlines():
-                    if counter <= 15:  # just for debug
-                        # prep.preprocess_tweet(line, emoji_dict)
-                        self.preprocess_tweet_aux(line, emoji_dict)
-                        counter += 1
-                    else:  # just for debug
-                        exit = True
-                        break
-
-                print(emoji_dict)
+        statement = 'SELECT text, id FROM token WHERE type = {}'.format(token_type)
+        self.__cursor.execute(statement)
+        result = self.__cursor.fetchall()
+        self.__db.commit()
         self.__close_connection()
 
-    def preprocess_tweet_aux(self, tweet, emoji_dict):
-        print(tweet)
-        for word in tweet.split():
-            if word == "USERNAME":
-                print("\tFound USERNAME, skipping", file=sys.stderr)
-                continue
-            elif word[0] == '#':
-                print("\tFound #, skipping", file=sys.stderr)
-                continue
-                # TODO: memorizzarlo nel DB
-            else:
-                # for emoji_category in self.__emojis:
-                #     if word in emoji_category:
-                #         # TODO: fare qualcosa
-                #         print(emoji_category, word)
-                #         continue
+        # decode the byte string from the DB and turn it in to a character (Unicode) string.
+        encoding = 'utf-8'
+        tokens_list = [(r[0].decode(encoding), r[1]) for r in result]
 
-                if word in emoji.UNICODE_EMOJI['en']:
-                    print("\tFound Emoji, skipping", file=sys.stderr)
-                    if word in emoji_dict:
-                        emoji_dict[word] += 1
-                    else:
-                        emoji_dict[word] += 1
-                    continue
-                    # TODO: memorizzarlo nel DB
+        for (token_text, token_id) in tokens_list:
+            tokens_map.update({token_text : token_id})
+        return tokens_map
