@@ -1,17 +1,11 @@
+import time
 from relationaldbhandler import RelationalDbHandler
 import json
 import os
 import re
-import sys
-from optparse import OptionParser
 from pathlib import Path
 
-import emoji
 import nltk
-
-nltk.download('pnkt')
-nltk.download('averaged_perceptron_tagger')
-nltk.download('universal_tagset')
 
 
 class Preprocessor:
@@ -45,7 +39,7 @@ class Preprocessor:
     def __init__(self):
         self.__handler = RelationalDbHandler()
 
-        # Read tokens from the db
+        # Read tokens from the db one for each type
         self.__emoticons = self.__handler.read_tokens(
             self.__handler.EMOTICON_TYPE)
         self.__emojis = self.__handler.read_tokens(self.__handler.EMOJI_TYPE)
@@ -53,6 +47,7 @@ class Preprocessor:
         self.__hashtags = self.__handler.read_tokens(
             self.__handler.HASHTAG_TYPE)
 
+        # struttura che conterrà i risultati intermedi del flusso
         self.__data = {
             self.__DATA_TWEETS: [],
             self.__DATA_CONTAINED_INS: [],
@@ -68,6 +63,12 @@ class Preprocessor:
         self.__slang_words = self.__read_slang_words(self.__SLANG_WORDS_PATH)
         self.__punctuation = self.__read_punctuation(self.__PUNCTUATION_PATH)
         self.__stopwords = set(nltk.corpus.stopwords.words('english'))
+
+    def get(self):
+        # Semplici print di controllo. TODO: rimuoverlo.
+        print("SLANG: {0}".format(self.__slang_words))
+        print("PUNCTUATION: {0}".format(self.__punctuation))
+        print("STOPWORDS: {0}".format(self.__stopwords))
 
     """
     Class of method for parsing utility files
@@ -118,6 +119,7 @@ class Preprocessor:
 
     """
     Class of method for interacting with data in the datastructures
+    Once filled with data they will be flushed to the DB
     """
 
     def get_sentiments(self) -> list:
@@ -129,6 +131,7 @@ class Preprocessor:
 
     def __add_data_tweet(self, sentiment: str) -> None:
         """
+        Appendi alla lista dei twitter la tupla (tweet_id, sentiment)
         :param sentiment: string reppresenting the sentiment 
         :type sentiment: str
         """
@@ -138,7 +141,7 @@ class Preprocessor:
 
     def __add_data_token(self, type: int, text: str) -> None:
         """
-        Aggiorno la mia mappa di token:token_id
+        Appendi alla lista dei dei token la tripletta (tkn_id, tkn_type, text)
         :param type: token_type
         :type type: int
         :param text: token da processare
@@ -159,8 +162,8 @@ class Preprocessor:
             self.__hashtags[text] = self.__max_token_id
 
     def __add_data_contained_in(self, tweet_id: int, token_id: int, pos=None) -> None:
-        """[summary]
-
+        """
+        Appendi alla lista di "dato_contenuto_in" la quadripletta (dci_id, tweet_id, tkn_id, POS)
         :param tweet_id: [description]
         :type tweet_id: int
         :param token_id: [description]
@@ -173,7 +176,7 @@ class Preprocessor:
             (self.__max_contained_in_id, tweet_id, token_id, pos))
 
     """
-    Preprocessing helper methods
+    Preprocessing helper methods: each for one specific task. DIVIDE ET IMPERA
     """
 
     def __clean_message(self, msg: list) -> str:
@@ -215,7 +218,7 @@ class Preprocessor:
 
         return msg
 
-    def __process_emo(self, msg:str) -> str:
+    def __process_emo(self, msg: str) -> str:
         """
         Verifico se word è una emoticon/emoij conosciuta
         Agisco di conseguenza con il caso emoij più complicato
@@ -245,17 +248,18 @@ class Preprocessor:
                 # emoji sono di 7 caratteri. 169 e 129750 sono i limiti entro cui
                 # sono contenute le emoji allo stato attuale di Unicode.
                 elif len(word) > 0 and \
-                    len(word) <= 7 and \
-                    ord(word[0]) >= 169 and \
-                    ord(word[0]) <= 129750:
+                        len(word) <= 7 and \
+                        ord(word[0]) >= 169 and \
+                        ord(word[0]) <= 129750:
 
                     self.__add_data_token(self.__handler.EMOJI_TYPE, word)
                     emo_id = self.__max_token_id
                     is_emoji_or_emoticon = True
-            
+
             if is_emoji_or_emoticon:
-                msg = msg.replace(word, "") # rimozione emoji
-                self.__add_data_contained_in(self.__max_tweet_id, emo_id, None) # update dict
+                msg = msg.replace(word, "")  # rimozione emoji
+                self.__add_data_contained_in(
+                    self.__max_tweet_id, emo_id, None)  # update dict
 
         return msg
 
@@ -314,36 +318,15 @@ class Preprocessor:
 
         return filtered_words
 
-    @staticmethod
-    def preprocess(self, raw_data):
-        """
-        It preprocess the raw_data removing all the '-' in the composite words.
-        :param raw_data:
-        :return:
-        """
-        preprocessed_data = []
-
-        for line in raw_data:
-            if "_" not in line:
-                preprocessed_data.append(line)
-
-        print("{0} ok!".format(len(preprocessed_data)))
-
-    def get(self):
-        # Semplici print di controllo. TODO: rimuoverlo.
-        print("SLANG: {0}".format(self.__slang_words))
-        print("PUNCTUATION: {0}".format(self.__punctuation))
-        print("STOPWORDS: {0}".format(self.__stopwords))
-
     def preprocess(self, msg: str, sentiment: str) -> None:
         '''
         TODO:
         ✓ Rimuovere USERNAME e URL
         ✓ Eliminare Stop Words
         ✓ Gestire le emoij/Emoticons
-        1. Lemmatizzare parole -> match con risorse lessicali
+        ✓ Lemmatizzare parole 
+        1. Memorizzare le parole nuove
         2. Conteggiare presenza nei tweet delle parole associate a ogni sentimento
-        3. Memorizzare le parole nuove
         '''
         self.__add_data_tweet(sentiment)
 
@@ -359,17 +342,29 @@ class Preprocessor:
         # substitute slang words and acronyms from the msg
         msg = self.__subsistute_slang_words(msg)
 
-        print(msg)
-
         # remove puntuaction from the msg
         msg = self.__clean_punctuation(msg)
 
         # tokenization, pos tagging, lemmatization, lower case and stop words elimination
         filtered_words = self.__words_from_msg(msg)
 
-        print(filtered_words)
+        # print(filtered_words)
+
+        for word in filtered_words:
+            word_id = self.__words.get(word[0])
+
+            if word_id is None:
+                self.__add_data_token(self.__handler.WORD_TYPE, word[0])
+                word_id = self.__max_token_id
+
+            self.__add_data_contained_in(self.__max_tweet_id, word_id, word[1])
 
         # TODO Insert words in Database
+
+    def write_to_db(self) -> None:
+        # test = json.dumps(self.__data, sort_keys=True, indent=4)
+        # print(test)
+        pass
 
 
 if __name__ == "__main__":
@@ -378,16 +373,19 @@ if __name__ == "__main__":
     dataset_dir = Path('.') / 'data' / 'twitter-messagges'
     output_p = Path('.') / 'output'
 
-    # Parte nuova
     prep = Preprocessor()
     # prep.get()  # TODO: debug toglierlo
 
-    # data = prep.load_data(options.input)
-    # prep.preprocess(data)
-
     # Test gestione twitter
+    print('Inserimento dei twitter messages.')
+    
+    total_time = 0
+
     for file_name in os.listdir(dataset_dir):
         file_path = dataset_dir / file_name
+
+        start = time.time()
+        print(f'Sto lavorando sul file: {file_name}')
 
         for sentiment in prep.get_sentiments():
             if(sentiment in file_name):
@@ -400,6 +398,16 @@ if __name__ == "__main__":
         with open(file_path, 'r', encoding='utf8') as file:
             count = 1
             for line in file.readlines():
-                print('{}:\t{}'.format(count, line))
+                #print('{}:\t{}'.format(count, line))
                 count += 1
                 prep.preprocess(line, current_sentiment_name)
+
+            print('Scrittura su database.')
+            prep.write_to_db()
+
+        end = time.time()
+        print('Processamento del file {} compiuto in {:.2f} secondi'.format(
+            file_name, end - start))
+        total_time += end - start
+
+    print('Inserimento concluso in {:.2f} secondi'.format(total_time))
