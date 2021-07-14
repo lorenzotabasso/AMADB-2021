@@ -1,12 +1,10 @@
+import json
 import sys
-
 import emoji
 import mysql.connector
 from pathlib import Path
 from sys import stderr
 import os
-
-from relational_preprocessing import Preprocessor
 
 
 class RelationalDbHandler:
@@ -18,7 +16,12 @@ class RelationalDbHandler:
 
     # costanti per la gestione del db
     MAX_ALLOWED_PACKET = 32000000
+
+    # Tipologia di token: token type nel db
     WORD_TYPE = 0
+    EMOJI_TYPE = 1
+    EMOTICON_TYPE = 2
+    HASHTAG_TYPE = 3
 
     # For handling error
     __ERR_NUM = 1
@@ -97,7 +100,7 @@ class RelationalDbHandler:
     def load_lexical_resources(self, dataset_dir: Path) -> None:
         """
         Carica le risorse lessicali a partire dai file presenti in una cartella.
-        :param dataset_dir: path to resource
+        :param dataset_dir: path to resource folder
         :return: None
         """
         self.__open_connection(self.DB_NAME)
@@ -130,7 +133,7 @@ class RelationalDbHandler:
                 # Gestiamo l'id dell'ultima risorsa lessicale inserita
                 lexical_resource_id = self.__cursor.lastrowid
 
-                # Inserimento di tutte le parole della risorsa.
+                # Inserimento di tutte le parole relative alla risorsa appena inserita
                 with open(file_path, 'r') as file:
                     for line in file.readlines():
                         # Rimozione spazi
@@ -138,7 +141,8 @@ class RelationalDbHandler:
                         # Scarto le parole composte.
                         if '_' in text:
                             continue
-
+                        
+                        # query sul db per recuperare, se presente il token
                         statement = 'SELECT `id` FROM `token` WHERE `text` = "{}" LIMIT 1;'.format(text)
                         self.__cursor.execute(statement)
                         result = self.__cursor.fetchall()
@@ -146,12 +150,14 @@ class RelationalDbHandler:
                         if len(result) > 0:
                             token_id = result[0][0]
                         else:
+                            # se non è presente vado ad inserirlo
                             statement = 'INSERT INTO `token`(`type`, `text`) VALUES({}, "{}");' \
                                 .format(self.WORD_TYPE, text)
                             self.__cursor.execute(statement)
                             # discorso analogo per il token id
                             token_id = self.__cursor.lastrowid
 
+                        # collegamento tra token e risorsa lessicale
                         statement = 'INSERT INTO `in_resource`(`token_id`, `lexical_resource_id`) VALUES({}, {});' \
                             .format(token_id, lexical_resource_id)
 
@@ -163,7 +169,102 @@ class RelationalDbHandler:
 
         self.__db.commit()
         self.__close_connection()
+    
 
+    def read_emojis(self, file_path: Path) -> dict:
+        """
+        Legge il file JSON delle emojis e lo ritorna.
+        :param file_path: il path del file delle emoji words.
+        :return: un dizionario contenente le emoji.
+        """
+        with open(file_path) as json_file:
+            emoji_map = json.load(json_file)
+
+        return emoji_map
+        
+    def load_emoticon(self, token_type: int, file_path: Path) -> None:
+        # TODO
+        pass
+
+    """
+    Query methods for internal use
+    """
+
+    def get_sentiments(self) -> list:
+        """
+        Restituisce la lista dei sentimenti presenti nel DB.
+        :return: lista di sentimenti (8)
+        :rtype: list
+        """
+        self.__open_connection(self.DB_NAME)
+        statement = 'SELECT `name` FROM `sentiment`'
+        self.__cursor.execute(statement)
+        result = self.__cursor.fetchall()
+
+        self.__db.commit()
+        self.__close_connection()
+
+        return [r[0] for r in result]
+    
+
+    def get_max_token_id(self) -> int:
+        """
+        :return: Restituisce l'id massimo tra tutti i tokens nel DB
+        :rtype: int
+        """
+        self.__open_connection(self.DB_NAME)
+
+        statement = 'SELECT max(`id`) FROM `token`'
+        self.__cursor.execute(statement)
+        result = self.__cursor.fetchall()
+
+        self.__close_connection()
+
+        if result[0][0] == None:
+            return 0
+        else:
+            return result[0][0]
+        
+
+    def get_max_tweet_id(self) -> int:
+        """
+        :return: Restituisce l'id massimo tra tutti i tweets nel DB
+        :rtype: int
+        """
+        self.__open_connection(self.DB_NAME)
+
+        statement = 'SELECT max(`id`) FROM `tweet`'
+        self.__cursor.execute(statement)
+        result = self.__cursor.fetchall()
+
+        self.__close_connection()
+
+        if result[0][0] == None:
+            return 0
+        else:
+            return result[0][0]
+        
+
+    def get_max_contained_in_id(self) -> int:
+        """
+        :return: Restituisce l'id massimo tra tutte le coppie token-tweet presenti nel DB
+        :rtype: int
+        """
+        self.__open_connection(self.DB_NAME)
+        
+        statement = 'SELECT max(`id`) FROM `contained_in`'
+        self.__cursor.execute(statement)
+        result = self.__cursor.fetchall()
+
+        self.__close_connection()
+
+        if result[0][0] == None:
+            return 0
+        else:
+            return result[0][0]
+        
+
+    # TODO Rimuovere questi metodi    
     def load_twitter_messages(self, twitter_messages_dir) -> None:
         self.__open_connection(self.DB_NAME)
 
@@ -178,7 +279,6 @@ class RelationalDbHandler:
             elif exit:  # just for debug
                 break
 
-            prep = Preprocessor()
             with open(file_path, 'r') as file:
                 counter = 0  # just for debug
                 emoji_dict = {}
@@ -192,49 +292,6 @@ class RelationalDbHandler:
                         break
 
                 print(emoji_dict)
-
-        #     # Inserimento della risorsa lessicale.
-        #     # Il nome della risorsa è dato dal nome del file meno l'estensione.
-        #     dataset_name = file_name.rsplit('.')[0]
-        #     statement = 'INSERT INTO `lexical_resource`(`name`, `sentiment_id`) VALUES("{}", "{}")' \
-        #         .format(dataset_name, dir_name.lower())
-        #     self.__cursor.execute(statement)
-        #
-        #     # Gestiamo l'id dell'ultima risorsa lessicale inserita
-        #     lexical_resource_id = self.__cursor.lastrowid
-        #
-        #     # Inserimento di tutte le parole della risorsa.
-        #     with open(file_path, 'r') as file:
-        #         for line in file.readlines():
-        #             # Rimozione spazi
-        #             text = line.strip()
-        #             # Scarto le parole composte.
-        #             if '_' in text:
-        #                 continue
-        #
-        #             statement = 'SELECT `id` FROM `token` WHERE `text` = "{}" LIMIT 1;'.format(text)
-        #             self.__cursor.execute(statement)
-        #             result = self.__cursor.fetchall()
-        #
-        #             if len(result) > 0:
-        #                 token_id = result[0][0]
-        #             else:
-        #                 statement = 'INSERT INTO `token`(`type`, `text`) VALUES({}, "{}");' \
-        #                     .format(self.WORD_TYPE, text)
-        #                 self.__cursor.execute(statement)
-        #                 # discorso analogo per il token id
-        #                 token_id = self.__cursor.lastrowid
-        #
-        #             statement = 'INSERT INTO `in_resource`(`token_id`, `lexical_resource_id`) VALUES({}, {});' \
-        #                 .format(token_id, lexical_resource_id)
-        #
-        #             # Gestione degli errori in caso di duplicati presenti nei dataset.
-        #             try:
-        #                 self.__cursor.execute(statement)
-        #             except mysql.connector.errors.Error:
-        #                 print('  Trovato duplicato nel file {}: {}'.format(file_name, text), file=sys.stderr)
-        #
-        # self.__db.commit()
         self.__close_connection()
 
     def preprocess_tweet_aux(self, tweet, emoji_dict):
