@@ -32,7 +32,7 @@ class RelationalDbHandler:
 
     def __open_connection(self, database_name=None) -> None:
         """
-        Apre la connessione al database e istanzia un oggetto MySQLCursor,
+        Apre la connessione al database e istanza un oggetto MySQLCursor,
         eventualmente anche selezionando il database fornito in input.
         """
         try:
@@ -186,7 +186,7 @@ class RelationalDbHandler:
 
         return emoji_map
 
-    def load_emoticon_or_emoij(self, token_type: int, file_path: Path) -> None:
+    def load_emoticon_or_emoji(self, token_type: int, file_path: Path) -> None:
         """
         Carica le emoticon o le emoji a partire dal file in input con alcuni dettagli; 
         la distinzione tra emoticon ed emoji è data da token_type
@@ -218,7 +218,7 @@ class RelationalDbHandler:
             result = self.__cursor.fetchall()
 
             if len(result) <= 0:
-                # Debug print(f"Vado ad inserire il l'emo {key}")
+                # Debug print(f"Vado ad inserire il l'emmo {key}")
                 statement = 'INSERT INTO `token`(`type`, `text`) VALUES({}, "{}");'.format(
                     token_type, key)
                 self.__cursor.execute(statement)

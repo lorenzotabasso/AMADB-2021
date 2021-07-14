@@ -13,7 +13,7 @@ class Preprocessor:
     __SLANG_WORDS_PATH = __PROCESSING_PATH / 'slang_words.json'
     __PUNCTUATION_PATH = __PROCESSING_PATH / 'punctuation.txt'
 
-    # Collection of dictonary for data
+    # Collection of dictionary for data
     __emojis = {}
     __sentiments = []
     __emoticons = {}
@@ -89,7 +89,7 @@ class Preprocessor:
     @staticmethod
     def __read_punctuation(file_path: Path) -> list:
         """
-        Legge il file contenente la puncuation e ritorna il suo contenuto
+        Legge il file contenente la punctuation e ritorna il suo contenuto
         incapsulato in una lista.
         :param file_path: il path del file della punctuation.
         :return: una lista contenente i segni di punteggiatura.
@@ -101,21 +101,6 @@ class Preprocessor:
                 punctuation_list = line.split(" ")
 
         return punctuation_list
-
-    @staticmethod
-    def load_data(self, raw_data) -> list:
-        """
-        Legge raw_data una linea per volta e la carica in una lista.
-        :return: una lista contenente i dati in raw_data
-        """
-        emoSN = []
-
-        with open(options.input, "r", encoding="utf-8") as dataset:
-            for line in dataset:
-                emoSN.append(line)
-
-            print("finished!")
-            return emoSN
 
     """
     Class of method for interacting with data in the datastructures
@@ -151,7 +136,7 @@ class Preprocessor:
         self.__data[self.__DATA_TOKENS].append(
             (self.__max_token_id, type, text))
 
-        # Aggiungo il token al dizionario/mappa appropriato sfruttando le costanti definite nel dbhandler
+        # Aggiungo il token al dizionario/mappa appropriato sfruttando le costanti definite nel db-handler
         if type == self.__handler.WORD_TYPE:
             self.__words[text] = self.__max_token_id
         elif type == self.__handler.EMOTICON_TYPE:
@@ -163,7 +148,7 @@ class Preprocessor:
 
     def __add_data_contained_in(self, tweet_id: int, token_id: int, pos=None) -> None:
         """
-        Appendi alla lista di "dato_contenuto_in" la quadripletta (dci_id, tweet_id, tkn_id, POS)
+        Appendi alla lista di "dato_contenuto_in" la quadruplets (dci_id, tweet_id, tkn_id, POS)
         :param tweet_id: [description]
         :type tweet_id: int
         :param token_id: [description]
@@ -220,8 +205,8 @@ class Preprocessor:
 
     def __process_emo(self, msg: str) -> str:
         """
-        Verifico se word è una emoticon/emoij conosciuta
-        Agisco di conseguenza con il caso emoij più complicato
+        Verifico se word è una emoticon/emoji conosciuta
+        Agisco di conseguenza con il caso emoji più complicato
         :param msg: messaggio da analizzare
         :type msg: str
         :return: messaggio ripulito da emoji ed emoticons
@@ -309,7 +294,7 @@ class Preprocessor:
         # lowering cases
         tagged_words = [(w[0].lower(), w[1])
                         for w in tagged_words]
-        # lemmatizzazion
+        # lemmatizzazione
         lemmatized_tagged_words = [(lemmatizer.lemmatize(
             w[0]), w[1]) for w in tagged_words]
         # remove stopwords
@@ -323,7 +308,7 @@ class Preprocessor:
         TODO:
         ✓ Rimuovere USERNAME e URL
         ✓ Eliminare Stop Words
-        ✓ Gestire le emoij/Emoticons
+        ✓ Gestire le emoji/Emoticons
         ✓ Lemmatizzare parole 
         1. Memorizzare le parole nuove
         2. Conteggiare presenza nei tweet delle parole associate a ogni sentimento
@@ -342,7 +327,7 @@ class Preprocessor:
         # substitute slang words and acronyms from the msg
         msg = self.__subsistute_slang_words(msg)
 
-        # remove puntuaction from the msg
+        # remove punctuation from the msg
         msg = self.__clean_punctuation(msg)
 
         # tokenization, pos tagging, lemmatization, lower case and stop words elimination
@@ -362,15 +347,17 @@ class Preprocessor:
         # TODO Insert words in Database
 
     def write_to_db(self) -> None:
-        # test = json.dumps(self.__data, sort_keys=True, indent=4)
-        # print(test)
+        """
+        Ogni lista presente in __data viene resa persistente, tramite
+        opportune chiamate al DB-handler e reinizializzata 
+        """
         pass
 
 
 if __name__ == "__main__":
     sentiment_path = Path('.') / 'data' / 'lexical-resources' / 'Sentiments'
     anger_p = sentiment_path / "Anger" / "EmoSN_anger.txt"
-    dataset_dir = Path('.') / 'data' / 'twitter-messagges'
+    dataset_dir = Path('.') / 'data' / 'twitter-messages'
     output_p = Path('.') / 'output'
 
     prep = Preprocessor()
@@ -392,7 +379,7 @@ if __name__ == "__main__":
                 current_sentiment_name = sentiment
                 break
 
-        print('Prepocessing delle frasi del sentimento {}'.format(
+        print('Preprocessing delle frasi del sentimento {}'.format(
             current_sentiment_name))
 
         with open(file_path, 'r', encoding='utf8') as file:

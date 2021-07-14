@@ -81,7 +81,10 @@ services:
             TERM: fish
             TZ: ${TIMEZONE}
             ME_CONFIG_MONGODB_SERVER: "mongorouter"
+            ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
             ME_CONFIG_MONGODB_PORT: ${MONGO_ROUTER_PORT:-27017}
+        depends_on:
+                - mongorouter
 
     # MARIA DB SERVICES
     # MariaDB container
