@@ -18,10 +18,13 @@ if __name__ == "__main__":
     dataset_dir = data_path / 'lexical-resources' / 'Sentiments'
     db_creator.load_lexical_resources(dataset_dir)
 
-    print('Inserimento emoticon.')
-    # TODO
     print('Inserimento emoji.')
-    # TODO
+    emoji_path = data_path / 'processing' / 'emoji.json'
+    db_creator.load_emoticon_or_emoji(token_type=db_creator.EMOJI_TYPE, file_path=emoji_path)
+
+    print('Inserimento emoticon.')
+    emoji_path = data_path / 'processing' / 'emoticons.json'
+    db_creator.load_emoticon_or_emoji(token_type=db_creator.EMOTICON_TYPE, file_path=emoji_path)
 
     end = time.time()
     print('Tempo totale create MariaDB: {:.2f} secondi'.format(end - start))

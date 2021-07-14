@@ -351,7 +351,15 @@ class Preprocessor:
         Ogni lista presente in __data viene resa persistente, tramite
         opportune chiamate al DB-handler e reinizializzata 
         """
-        pass
+        self.__handler.load_tweets_batch(self.__data[self.__DATA_TWEETS])
+        self.__data[self.__DATA_TWEETS] = []
+
+        # TODO Problematica catena di emoij, missclassification.
+        self.__handler.load_tokens_batch(self.__data[self.__DATA_TOKENS])
+        self.__data[self.__DATA_TOKENS] = []
+
+        self.__handler.load_contained_ins_batch(self.__data[self.__DATA_CONTAINED_INS])
+        self.__data[self.__DATA_CONTAINED_INS] = []
 
 
 if __name__ == "__main__":
@@ -390,7 +398,7 @@ if __name__ == "__main__":
                 prep.preprocess(line, current_sentiment_name)
 
             print('Scrittura su database.')
-            prep.write_to_db()
+            # prep.write_to_db()
 
         end = time.time()
         print('Processamento del file {} compiuto in {:.2f} secondi'.format(

@@ -99,6 +99,10 @@ class RelationalDbHandler:
         self.__db.commit()
         self.__close_connection()
 
+    """
+    Methods for loading resources in the DB
+    """
+
     def load_lexical_resources(self, dataset_dir: Path) -> None:
         """
         Carica le risorse lessicali a partire dai file presenti in una cartella.
@@ -206,6 +210,7 @@ class RelationalDbHandler:
                 # Ecco quindi il file json: converto quindi la stringa in rappresentazione binaria trattandola come ASCII,
                 # per poi riconvertirla in UTF-8
                 # Ho così già caratteri delle emoji e non più la loro rappresentazione tramite ASCII escape.
+                # key = key.encode('ascii').decode('utf-8')
                 pass
             else:
                 # Caso delle emoticon: devo sostituire il carattere '\' con '\\' per evitare che il DBMS lo tratti come carattere di escape.
@@ -226,8 +231,54 @@ class RelationalDbHandler:
         self.__db.commit()
         self.__close_connection()
 
+    def load_tweets_batch(self, tweets: list) -> None:
+        """
+        Carica una lista di tweets facendo riferimento a uno specifico sentimento.
+        :param tweets: lista di tuple (tweet_id, sentiment)
+        :type tweets: list
+        """
+        statement = 'INSERT INTO `tweet`(`id`, `sentiment_id`) VALUES(%s, %s);'
+
+        self.__open_connection(self.DB_NAME)
+
+        self.__cursor.executemany(statement, tweets)
+        self.__db.commit()
+
+        self.__close_connection()
+
+    def load_tokens_batch(self, tokens: list) -> None:
+        """
+        Carica un token facendo riferimento a un tipo specifico.
+        :param tokens: lista di triplette (tkn_id, tkn_type, text)
+        :type tokens: list
+        """
+        print(tokens)
+        statement = 'INSERT INTO `token`(`id`, `type`, `text`) VALUES(%s, %s, %s);'
+
+        self.__open_connection(self.DB_NAME)
+
+        self.__cursor.executemany(statement, tokens)
+        self.__db.commit()
+
+        self.__close_connection()
+
+    def load_contained_ins_batch(self, contained_ins: list) -> None:
+        """
+        Collega la relazione contained_in facendo riferimento a un tweet_id e ad un token_id.
+        :param contained_ins: lista di quadruplets (dci_id, tweet_id, tkn_id, POS)
+        :type contained_ins: list
+        """
+        statement = 'INSERT INTO `contained_in`(`id`, `tweet_id`, `token_id`, `part_of_speech`) VALUES(%s, %s, %s, %s);'
+
+        self.__open_connection(self.DB_NAME)
+
+        self.__cursor.executemany(statement, contained_ins)
+        self.__db.commit()
+
+        self.__close_connection()
+
     """
-    Query methods for internal use. Con ID massimo si intende il maggiore (ultimo)
+    Query methods for internal preprocessing use. Con ID massimo si intende il maggiore (ultimo)
     """
 
     def get_sentiments(self) -> list:
@@ -311,7 +362,8 @@ class RelationalDbHandler:
         tokens_map = {}
 
         self.__open_connection(self.DB_NAME)
-        statement = 'SELECT text, id FROM token WHERE type = {}'.format(token_type)
+        statement = 'SELECT text, id FROM token WHERE type = {}'.format(
+            token_type)
         self.__cursor.execute(statement)
         result = self.__cursor.fetchall()
         self.__db.commit()
@@ -322,5 +374,5 @@ class RelationalDbHandler:
         tokens_list = [(r[0].decode(encoding), r[1]) for r in result]
 
         for (token_text, token_id) in tokens_list:
-            tokens_map.update({token_text : token_id})
+            tokens_map.update({token_text: token_id})
         return tokens_map
