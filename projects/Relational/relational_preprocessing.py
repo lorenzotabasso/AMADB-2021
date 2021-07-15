@@ -3,6 +3,7 @@ from relationaldbhandler import RelationalDbHandler
 import json
 import os
 import re
+import emoji
 from pathlib import Path
 
 import nltk
@@ -202,6 +203,23 @@ class Preprocessor:
             self.__add_data_contained_in(self.__max_tweet_id, hashtag_id)
 
         return msg
+    
+    @staticmethod
+    def de_emoji_fy(text) -> str:
+        """
+        Rimozione totale di emoticons/emoji ecc.
+        :param text: messaggio da pulire
+        :type text: str
+        :return: ritorna una stringa pulita dal pattern regex
+        :rtype: str
+        """
+        regrex_pattern = re.compile(pattern = "["
+            u"\U0001F600-\U0001F64F"  # emoticons
+            u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+            u"\U0001F680-\U0001F6FF"  # transport & map symbols
+            u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                            "]+", flags = re.UNICODE)
+        return regrex_pattern.sub(r'',text)
 
     def __process_emo(self, msg: str) -> str:
         """
@@ -212,7 +230,8 @@ class Preprocessor:
         :return: messaggio ripulito da emoji ed emoticons
         :rtype: str
         """
-        for word in msg.split():
+        # get_emoji_regexp from the https://pypi.org/project/emoji/, together with the usual split function
+        for word in emoji.get_emoji_regexp().split(msg):
             is_emoji_or_emoticon = False
 
             # Verifico se word è una emoticon conosciuta; se sì,
@@ -226,6 +245,7 @@ class Preprocessor:
 
                 if emo_id != None:
                     is_emoji_or_emoticon = True
+
                 # Controllo se word è una emoji. Alcune emoji sono formate da più
                 # emoji unite dal carattere ZWJ (zero width join) e alcune hanno
                 # in coda un carattere di selezione per mostrarle come disegno
@@ -242,10 +262,11 @@ class Preprocessor:
                     is_emoji_or_emoticon = True
 
             if is_emoji_or_emoticon:
-                msg = msg.replace(word, "")  # rimozione emoji
                 self.__add_data_contained_in(
-                    self.__max_tweet_id, emo_id, None)  # update dict
+                    self.__max_tweet_id, emo_id, None)  # update dict & table
 
+            msg = self.de_emoji_fy(msg)  # rimozione emoji
+            
         return msg
 
     def __subsistute_slang_words(self, msg: str) -> str:
@@ -335,6 +356,8 @@ class Preprocessor:
 
         # print(filtered_words)
 
+        # Insert words in Database
+
         for word in filtered_words:
             word_id = self.__words.get(word[0])
 
@@ -344,7 +367,6 @@ class Preprocessor:
 
             self.__add_data_contained_in(self.__max_tweet_id, word_id, word[1])
 
-        # TODO Insert words in Database
 
     def write_to_db(self) -> None:
         """
@@ -393,11 +415,11 @@ if __name__ == "__main__":
         with open(file_path, 'r', encoding='utf8') as file:
             count = 1
             for line in file.readlines():
-                #print('{}:\t{}'.format(count, line))
+                # print('{}:\t{}'.format(count, line))
                 count += 1
                 prep.preprocess(line, current_sentiment_name)
-                if count == 1000:
-                    break
+                # if count == 100:
+                #     break
                     
             print('Scrittura su database.')
             prep.write_to_db()
