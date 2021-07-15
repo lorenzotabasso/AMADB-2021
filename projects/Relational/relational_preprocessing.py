@@ -212,7 +212,7 @@ class Preprocessor:
         :return: messaggio ripulito da emoji ed emoticons
         :rtype: str
         """
-        for word in msg.split(' '):
+        for word in msg.split():
             is_emoji_or_emoticon = False
 
             # Verifico se word è una emoticon conosciuta; se sì,
@@ -354,7 +354,7 @@ class Preprocessor:
         self.__handler.load_tweets_batch(self.__data[self.__DATA_TWEETS])
         self.__data[self.__DATA_TWEETS] = []
 
-        # TODO Problematica catena di emoij, missclassification.
+        # TODO Problematica catena di emoji, missclassification.
         self.__handler.load_tokens_batch(self.__data[self.__DATA_TOKENS])
         self.__data[self.__DATA_TOKENS] = []
 
@@ -396,9 +396,11 @@ if __name__ == "__main__":
                 #print('{}:\t{}'.format(count, line))
                 count += 1
                 prep.preprocess(line, current_sentiment_name)
-
+                if count == 1000:
+                    break
+                    
             print('Scrittura su database.')
-            # prep.write_to_db()
+            prep.write_to_db()
 
         end = time.time()
         print('Processamento del file {} compiuto in {:.2f} secondi'.format(
