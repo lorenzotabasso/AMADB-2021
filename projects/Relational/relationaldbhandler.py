@@ -41,13 +41,15 @@ class RelationalDbHandler:
                     host=self.DB_HOST,
                     user=self.DB_USER,
                     password=self.DB_PASS,
-                    database=database_name
+                    database=database_name,
+                    charset="utf8mb4"
                 )
             else:
                 self.__db = mysql.connector.connect(
                     host=self.DB_HOST,
                     user=self.DB_USER,
-                    password=self.DB_PASS
+                    password=self.DB_PASS,
+                    charset="utf8mb4"
                 )
         except mysql.connector.Error as err:
             print(err, file=stderr)
@@ -253,11 +255,10 @@ class RelationalDbHandler:
         :param tokens: lista di triplette (tkn_id, tkn_type, text)
         :type tokens: list
         """
-        print(tokens)
         statement = 'INSERT INTO `token`(`id`, `type`, `text`) VALUES(%s, %s, %s);'
 
         self.__open_connection(self.DB_NAME)
-
+        
         self.__cursor.executemany(statement, tokens)
         self.__db.commit()
 
@@ -369,8 +370,6 @@ class RelationalDbHandler:
         self.__db.commit()
         self.__close_connection()
 
-        # decode the byte string from the DB and turn it in to a character (Unicode) string.
-        encoding = 'utf-8'
         tokens_list = [(r[0], r[1]) for r in result]
 
         for (token_text, token_id) in tokens_list:
