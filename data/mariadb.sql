@@ -8,9 +8,9 @@ CREATE TABLE `sentiment`
 
 CREATE TABLE `token`
 (
-    `id`   int(11)                          NOT NULL AUTO_INCREMENT,
-    `type` int(1)                           NOT NULL,
-    `text` varchar(256) COLLATE utf8mb4_bin NOT NULL,
+    `id`   int(11)                                 NOT NULL AUTO_INCREMENT,
+    `type` int(1)                                  NOT NULL,
+    `text` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4

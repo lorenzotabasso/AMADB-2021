@@ -201,6 +201,7 @@ class RelationalDbHandler:
         """        """"""
         self.__open_connection(self.DB_NAME)
 
+        statement = ''
         emo = self.__read_emo_json(file_path)
 
         for key in emo:
@@ -210,7 +211,7 @@ class RelationalDbHandler:
                 # Ecco quindi il file json: converto quindi la stringa in rappresentazione binaria trattandola come ASCII,
                 # per poi riconvertirla in UTF-8
                 # Ho così già caratteri delle emoji e non più la loro rappresentazione tramite ASCII escape.
-                # key = key.encode('ascii').decode('utf-8')
+                key = key.encode('ascii').decode('unicode_escape')
                 pass
             else:
                 # Caso delle emoticon: devo sostituire il carattere '\' con '\\' per evitare che il DBMS lo tratti come carattere di escape.
@@ -362,8 +363,7 @@ class RelationalDbHandler:
         tokens_map = {}
 
         self.__open_connection(self.DB_NAME)
-        statement = 'SELECT text, id FROM token WHERE type = {}'.format(
-            token_type)
+        statement = f'SELECT text, id FROM token WHERE type = {token_type}'
         self.__cursor.execute(statement)
         result = self.__cursor.fetchall()
         self.__db.commit()
@@ -371,7 +371,7 @@ class RelationalDbHandler:
 
         # decode the byte string from the DB and turn it in to a character (Unicode) string.
         encoding = 'utf-8'
-        tokens_list = [(r[0].decode(encoding), r[1]) for r in result]
+        tokens_list = [(r[0], r[1]) for r in result]
 
         for (token_text, token_id) in tokens_list:
             tokens_map.update({token_text: token_id})
