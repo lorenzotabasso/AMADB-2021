@@ -1,22 +1,24 @@
-import time
 from relationaldbhandler import RelationalDbHandler
-from pathlib import Path
+
+import unittest
+
+class RelationalTest(unittest.TestCase):
+
+    def test_sentiments(self):
+        handler = RelationalDbHandler()
+        sentiments = ['anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness', 'surprise', 'trust']
+        self.assertEqual(handler.read_attributes(), sentiments)
+
 
 if __name__ == '__main__':
-    sentiments = ['anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness', 'surprise', 'trust']
 
-    data_path = Path('.') / 'data'
+    handler = RelationalDbHandler()
+    limit = 7
 
-    db_creator = RelationalDbHandler()
+    for sentiment in handler.read_attributes():
+        most_present_j = handler.token_most_present(handler.EMOJI_TYPE, sentiment, limit)
+        most_present_h = handler.token_most_present(handler.HASHTAG_TYPE, sentiment, limit)
+        print(f'For sentiment {sentiment} the top {limit} tokens most present are:\n{most_present_j}\n{most_present_h}\n')
 
-    start = time.time()
+    unittest.main()
     
-    print('Inserimento dei twitter messages.')
-    twitter_messages_dir = data_path / 'twitter-messages'
-    
-    # TODO ci sto lavorando
-    # db_creator.load_twitter_messages(twitter_messages_dir)
-    
-    end = time.time()
-    print('Inserimento in MariaDB: {:.2f} secondi'.format(end - start))
-

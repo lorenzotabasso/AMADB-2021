@@ -258,7 +258,7 @@ class RelationalDbHandler:
         statement = 'INSERT INTO `token`(`id`, `type`, `text`) VALUES(%s, %s, %s);'
 
         self.__open_connection(self.DB_NAME)
-        
+
         self.__cursor.executemany(statement, tokens)
         self.__db.commit()
 
@@ -298,6 +298,26 @@ class RelationalDbHandler:
         self.__close_connection()
 
         return [r[0] for r in result]
+
+    def get_tokens(self, token_type: int):
+        """
+        Restituisce la lista di tutte le coppie (token, id) nel DB specificando il tipo del token.
+
+        :param token_type: [description]
+        :type token_type: int
+        :return: [description]
+        :rtype: [type]
+        """
+        self.__open_connection(self.DB_NAME)
+        statement = "SELECT `id`,`text`  FROM `token` WHERE `type` = {}".format(
+            token_type)
+        self.__cursor.execute(statement)
+
+        tokens = self.__cursor.fetchall()
+        self.__db.commit()
+        self.__close_connection()
+
+        return [(t[0], t[1]) for t in tokens]
 
     def get_max_token_id(self) -> int:
         """
@@ -353,6 +373,10 @@ class RelationalDbHandler:
         else:
             return result[0][0]
 
+    """ 
+    Query semplici di lettura
+    """
+
     def read_tokens(self, token_type: int):
         """
         Restituisce una mappa di token:token_id in base al tipo specificato dal parametro token_type
@@ -375,3 +399,47 @@ class RelationalDbHandler:
         for (token_text, token_id) in tokens_list:
             tokens_map.update({token_text: token_id})
         return tokens_map
+
+    def read_attributes(self) -> list:
+        """
+        :return: Restituisce la lista dei sentimenti presenti nel DB.
+        :rtype: list
+        """
+        self.__open_connection(self.DB_NAME)
+        statement = 'SELECT `name` FROM `sentiment`'
+        self.__cursor.execute(statement)
+        result = self.__cursor.fetchall()
+
+        self.__db.commit()
+        self.__close_connection()
+
+        return [r[0] for r in result]
+
+    """ 
+    Query complesse per l'output
+    """
+
+    def token_most_present(self, token_type: int, sentiment: str, limit: int):
+        """[summary]
+        Restituisce i token più presenti nei tweet relativi al sentimento `sentiment` con rispettive occorrenze.
+        Si deve specificare il tipo del token e il numero delle parole massime che devono essere restituite
+        :param token_type: tipologia di token da recuperare (WORD_TYPE = 0, EMOJI_TYPE = 1, EMOTICON_TYPE = 2, HASHTAG_TYPE = 3)
+        :param sentiment: sentimento da interrogare
+        :param limit: upper bound
+        """
+        statement = "SELECT token.text, count(contained_in.id) \
+            FROM tweet join contained_in on tweet.id = contained_in.tweet_id \
+                join token on token.id = contained_in.token_id \
+            WHERE token.type = {} AND tweet.sentiment_id = '{}' \
+            GROUP BY tweet.sentiment_id, token.text, contained_in.part_of_speech \
+            ORDER BY count(contained_in.id) DESC \
+            LIMIT {};".format(token_type, sentiment, limit)
+
+        self.__open_connection(self.DB_NAME)
+        self.__cursor.execute(statement)
+        result = self.__cursor.fetchall()
+
+        self.__db.commit()
+        self.__close_connection()
+
+        return [(r[0], r[1]) for r in result]
