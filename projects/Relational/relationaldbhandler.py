@@ -42,14 +42,14 @@ class RelationalDbHandler:
                     user=self.DB_USER,
                     password=self.DB_PASS,
                     database=database_name,
-                    charset="utf8mb4"
+                    #charset="utf8mb4"
                 )
             else:
                 self.__db = mysql.connector.connect(
                     host=self.DB_HOST,
                     user=self.DB_USER,
                     password=self.DB_PASS,
-                    charset="utf8mb4"
+                    #charset="utf8mb4"
                 )
         except mysql.connector.Error as err:
             print(err, file=stderr)
@@ -414,6 +414,101 @@ class RelationalDbHandler:
         self.__close_connection()
 
         return [r[0] for r in result]
+
+
+    def get_all_lexical_resource(self):
+        # Ritorna il numero di parole per la risorsa lessicale
+        statement = "SELECT lr.name AS lex_name \
+                     FROM lexical_resource \
+                     ORDER BY lr.name;"
+
+        self.__open_connection(self.DB_NAME)
+        self.__cursor.execute(statement)
+
+        result = self.__cursor.fetchall()
+
+        self.__db.commit()
+        self.__close_connection()
+
+        return result
+
+
+    def get_n_lex_words(self, lex_resource) -> int:
+        """
+        Restituisce il totale delle parole presenti nel DB per la risorsa lessicale in input.
+        :param lex_resource: risorsa lessicale di cui si vuole il conteggio.
+        :return: il conteggio delle parole presenti nella risorsa lessicale.
+        """
+
+        # Ritorna il numero di parole per la risorsa lessicale
+        statement = "SELECT COUNT(t.id) \
+                     FROM token t JOIN in_resource ir ON t.id = ir.token_id  \
+                     JOIN lexical_resource lr ON ir.lexical_resource_id = lr.id \
+                     WHERE lr.name = '{}' \
+                     GROUP BY lr.name;".format(lex_resource)
+
+        self.__open_connection(self.DB_NAME)
+        self.__cursor.execute(statement)
+
+        result = self.__cursor.fetchall()
+
+        self.__db.commit()
+        self.__close_connection()
+
+        # La struttura è del formato [(354,)], per questo il [0][0] finale
+        return result[0][0]
+
+    def get_n_twitter_words(self, sentiment) -> int:
+        """
+        Restituisce il totale dei tweets etichettati con lo stesso sentimento dato in input.
+        :param sentiment: il sentimento di cui si vuole il conteggio.
+        :return: il conteggio dei tweet presenti nel sentimento.
+        """
+
+        statement = "SELECT COUNT(t.id) \
+                    FROM token t JOIN contained_in ci ON t.id = ci.token_id \
+                    JOIN tweet tw ON ci.id = tw.id \
+                    JOIN sentiment s ON tw.sentiment_id = s.name \
+                    AND s.name = 'fear' \
+                    GROUP BY s.name;".format(sentiment)
+
+        self.__open_connection(self.DB_NAME)
+        self.__cursor.execute(statement)
+
+        result = self.__cursor.fetchall()
+
+        self.__db.commit()
+        self.__close_connection()
+
+        # La struttura è del formato [(354,)], per questo il [0][0] finale
+        return result[0][0]
+
+    def get_shared_words(self, lex_resource, sentiment) -> int:
+        """
+        Ritorna il numero di parole in comune tra la risorsa lessicale e il sentimento.
+        :param lex_resource: risorsa lessicale in input
+        :param sentiment:  sentimento in input
+        :return: conteggio delle parole in comune tra la risorsa lessicale e l'input.
+        """
+
+        statement = "SELECT COUNT(t.id) \
+                    FROM token t JOIN in_resource ir ON t.id = ir.token_id  \
+                    JOIN lexical_resource lr ON ir.lexical_resource_id = lr.id \
+                    JOIN contained_in ci ON t.id = ci.token_id  \
+                    JOIN tweet tw ON ci.id = tw.id \
+                    JOIN sentiment s ON tw.sentiment_id = s.name \
+                    WHERE lr.name = '{}' AND s.name = '{}';".format(lex_resource, sentiment)
+
+        self.__open_connection(self.DB_NAME)
+        self.__cursor.execute(statement)
+
+        result = self.__cursor.fetchall()
+
+        self.__db.commit()
+        self.__close_connection()
+
+        # La struttura è del formato [(354,)], per questo il [0][0] finale
+        return result[0][0]
 
     """ 
     Query complesse per l'output
