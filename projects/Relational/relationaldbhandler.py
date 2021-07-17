@@ -578,8 +578,8 @@ class RelationalDbHandler:
         self.__db.commit()
         self.__close_connection()
 
-        # return [(r[0], r[1]) for r in result]
-        return {r[0]: r[1] for r in result}
+        return [(r[0], r[1]) for r in result]
+        # return {r[0]: r[1] for r in result}
 
 
     def new_words(self, sentiment: str) -> list:

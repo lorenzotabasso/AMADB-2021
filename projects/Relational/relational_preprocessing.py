@@ -1,4 +1,5 @@
 import time
+from pandas.core.frame import DataFrame
 from relationaldbhandler import RelationalDbHandler
 import json
 import os
@@ -198,22 +199,6 @@ class Preprocessor:
 
         return msg
     
-    @staticmethod
-    def de_emoji_fy(text) -> str:
-        """
-        Rimozione totale di emoticons/emoji ecc.
-        :param text: messaggio da pulire
-        :type text: str
-        :return: ritorna una stringa pulita dal pattern regex
-        :rtype: str
-        """
-        regrex_pattern = re.compile(pattern = "["
-            u"\U0001F600-\U0001F64F"  # emoticons
-            u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-            u"\U0001F680-\U0001F6FF"  # transport & map symbols
-            u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-                            "]+", flags = re.UNICODE)
-        return regrex_pattern.sub(r'',text)
 
     def __process_emo(self, msg: str) -> str:
         """
@@ -224,8 +209,7 @@ class Preprocessor:
         :return: messaggio ripulito da emoji ed emoticons
         :rtype: str
         """
-        # get_emoji_regexp from the https://pypi.org/project/emoji/, together with the usual split function
-        for word in emoji.get_emoji_regexp().split(msg):
+        for word in msg.split(' '):
             is_emoji_or_emoticon = False
 
             # Verifico se word è una emoticon conosciuta; se sì,
@@ -234,34 +218,40 @@ class Preprocessor:
 
             if emo_id != None:
                 is_emoji_or_emoticon = True
-            else:
-                emo_id = self.__emojis.get(word)
 
-                if emo_id != None:
-                    is_emoji_or_emoticon = True
+            if is_emoji_or_emoticon:
+                msg = msg.replace(word, "") # rimozione emoji
+                self.__add_data_contained_in(
+                    self.__max_tweet_id, emo_id, None)  # update dict & table
 
-                # Controllo se word è una emoji. Alcune emoji sono formate da più
-                # emoji unite dal carattere ZWJ (zero width join) e alcune hanno
-                # in coda un carattere di selezione per mostrarle come disegno
-                # o rappresentazione grafica. Ad oggi, le combinazioni massime di
-                # emoji sono di 7 caratteri. 169 e 129750 sono i limiti entro cui
-                # sono contenute le emoji allo stato attuale di Unicode.
-                elif len(word) > 0 and \
-                        len(word) <= 7 and \
-                        ord(word[0]) >= 169 and \
-                        ord(word[0]) <= 129750:
+        # get_emoji_regexp from the https://pypi.org/project/emoji/, together with the usual split function
+        for p_word in emoji.get_emoji_regexp().split(msg):
+            is_emoji_or_emoticon = False
 
-                    self.__add_data_token(self.__handler.EMOJI_TYPE, word)
-                    emo_id = self.__max_token_id
-                    is_emoji_or_emoticon = True
+            emo_id = self.__emojis.get(p_word)
+            if emo_id != None:
+                is_emoji_or_emoticon = True
+
+            # Controllo se word è una emoji. Alcune emoji sono formate da più
+            # emoji unite dal carattere ZWJ (zero width join) e alcune hanno
+            # in coda un carattere di selezione per mostrarle come disegno
+            # o rappresentazione grafica. Ad oggi, le combinazioni massime di
+            # emoji sono di 7 caratteri. 169 e 129750 sono i limiti entro cui
+            # sono contenute le emoji allo stato attuale di Unicode.
+            elif len(p_word) > 0 and \
+                    len(p_word) <= 7 and \
+                    ord(p_word[0]) >= 169 and \
+                    ord(p_word[0]) <= 129750:
+
+                self.__add_data_token(self.__handler.EMOJI_TYPE, p_word)
+                emo_id = self.__max_token_id
+                is_emoji_or_emoticon = True
 
             if is_emoji_or_emoticon:
                 self.__add_data_contained_in(
                     self.__max_tweet_id, emo_id, None)  # update dict & table
 
-            msg = self.de_emoji_fy(msg)  # rimozione emoji
-            
-        return msg
+        return emoji.replace_emoji(msg)
 
     def __subsistute_slang_words(self, msg: str) -> str:
         """
@@ -348,8 +338,6 @@ class Preprocessor:
         # tokenization, pos tagging, lemmatization, lower case and stop words elimination
         filtered_words = self.__words_from_msg(msg)
 
-        # print(filtered_words)
-
         # Insert words in Database
         for word in filtered_words:
             word_id = self.__words.get(word[0])
@@ -361,30 +349,6 @@ class Preprocessor:
             self.__add_data_contained_in(self.__max_tweet_id, word_id, word[1])
 
         
-    def common_world_removal(self) -> None:
-        """
-
-        """
-        from collections import Counter
-
-        cnt = Counter()
-        for text in values:
-            for word in text.split():
-                cnt[word] += 1
-                
-        cnt.most_common(10)
-
-        # Removing the frequent words
-        freq = set([w for (w, _) in cnt.most_common(10)])
-        # function to remove the frequent words
-        def freqwords(text):
-            return " ".join([word for word in str(text).split() if word not 
-        in freq])
-        # Passing the function freqwords
-
-
-
-
     def write_to_db(self) -> None:
         """
         Ogni lista presente in __data viene resa persistente, tramite
@@ -435,8 +399,8 @@ if __name__ == "__main__":
                 # print('{}:\t{}'.format(count, line))
                 count += 1
                 prep.preprocess(line, current_sentiment_name)
-                if count == 1000:
-                    break
+                # if count == 1000:
+                    # break
                     
             print('Scrittura su database.')
             prep.write_to_db()
