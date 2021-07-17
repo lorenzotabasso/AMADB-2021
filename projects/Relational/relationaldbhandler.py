@@ -415,11 +415,10 @@ class RelationalDbHandler:
 
         return [r[0] for r in result]
 
-
-    def get_all_lexical_resource(self):
-        # Ritorna il numero di parole per la risorsa lessicale
+    def get_all_lexical_resources(self):
+        # Ritorna ua lista di tutte le risorse lessicali
         statement = "SELECT lr.name AS lex_name \
-                     FROM lexical_resource \
+                     FROM lexical_resource lr \
                      ORDER BY lr.name;"
 
         self.__open_connection(self.DB_NAME)
@@ -430,7 +429,39 @@ class RelationalDbHandler:
         self.__db.commit()
         self.__close_connection()
 
-        return result
+        return [r[0] for r in result]
+
+    def get_all_sentiments(self):
+        # Ritorna ua lista di tutte i sentimenti
+        statement = "SELECT s.name \
+                     FROM sentiment s;"
+
+        self.__open_connection(self.DB_NAME)
+        self.__cursor.execute(statement)
+
+        result = self.__cursor.fetchall()
+
+        self.__db.commit()
+        self.__close_connection()
+
+        return [r[0] for r in result]
+
+    def get_all_lex_resources_for_sentiment(self, sentiment):
+        # Ritorna la lista di tuttel e risorse lessicali per un dato sentimento
+        statement = "SELECT s.name AS s_name, lr.name AS lr_name \
+                     FROM lexical_resource lr JOIN sentiment s ON lr.sentiment_id = s.name \
+                     AND s.name = '{}' \
+                     ORDER BY s.name;".format(sentiment)
+
+        self.__open_connection(self.DB_NAME)
+        self.__cursor.execute(statement)
+
+        result = self.__cursor.fetchall()
+
+        self.__db.commit()
+        self.__close_connection()
+
+        return [r[1] for r in result]
 
 
     def get_n_lex_words(self, lex_resource) -> int:
@@ -467,9 +498,9 @@ class RelationalDbHandler:
 
         statement = "SELECT COUNT(t.id) \
                     FROM token t JOIN contained_in ci ON t.id = ci.token_id \
-                    JOIN tweet tw ON ci.id = tw.id \
+                    JOIN tweet tw ON ci.tweet_id = tw.id \
                     JOIN sentiment s ON tw.sentiment_id = s.name \
-                    AND s.name = 'fear' \
+                    AND s.name = '{}' \
                     GROUP BY s.name;".format(sentiment)
 
         self.__open_connection(self.DB_NAME)
@@ -491,13 +522,24 @@ class RelationalDbHandler:
         :return: conteggio delle parole in comune tra la risorsa lessicale e l'input.
         """
 
+        #statement = "SELECT COUNT(t.id) \
+        #            FROM token t JOIN in_resource ir ON t.id = ir.token_id  \
+        #            JOIN lexical_resource lr ON ir.lexical_resource_id = lr.id \
+        #            JOIN contained_in ci ON t.id = ci.token_id  \
+        #            JOIN tweet tw ON ci.id = tw.id \
+        #            JOIN sentiment s ON tw.sentiment_id = s.name \
+        #            WHERE lr.name = '{}' AND s.name = '{}';".format(lex_resource, sentiment)
+
         statement = "SELECT COUNT(t.id) \
-                    FROM token t JOIN in_resource ir ON t.id = ir.token_id  \
+                    FROM token t JOIN in_resource ir ON t.id = ir.token_id \
                     JOIN lexical_resource lr ON ir.lexical_resource_id = lr.id \
-                    JOIN contained_in ci ON t.id = ci.token_id  \
+                    AND lr.name = '{}' \
+                    WHERE t.id IN \
+                    (SELECT t.id \
+                    FROM token t JOIN contained_in ci ON t.id = ci.token_id \
                     JOIN tweet tw ON ci.id = tw.id \
                     JOIN sentiment s ON tw.sentiment_id = s.name \
-                    WHERE lr.name = '{}' AND s.name = '{}';".format(lex_resource, sentiment)
+                    AND s.name = '{}');".format(lex_resource, sentiment)
 
         self.__open_connection(self.DB_NAME)
         self.__cursor.execute(statement)
@@ -537,4 +579,5 @@ class RelationalDbHandler:
         self.__db.commit()
         self.__close_connection()
 
-        return [(r[0], r[1]) for r in result]
+        #return [(r[0], r[1]) for r in result]
+        return {r[0]: r[1] for r in result}
