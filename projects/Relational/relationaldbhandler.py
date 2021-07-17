@@ -42,14 +42,14 @@ class RelationalDbHandler:
                     user=self.DB_USER,
                     password=self.DB_PASS,
                     database=database_name,
-                    charset="utf8"
+                    charset="utf8mb4"
                 )
             else:
                 self.__db = mysql.connector.connect(
                     host=self.DB_HOST,
                     user=self.DB_USER,
                     password=self.DB_PASS,
-                    charset="utf8"
+                    charset="utf8mb4"
                 )
         except mysql.connector.Error as err:
             print(err, file=stderr)
@@ -213,7 +213,6 @@ class RelationalDbHandler:
                 # Ecco quindi il file json: converto quindi la stringa in rappresentazione binaria trattandola come ASCII,
                 # per poi riconvertirla in UTF-8
                 # Ho così già caratteri delle emoji e non più la loro rappresentazione tramite ASCII escape.
-                key = key.encode('ascii').decode('unicode_escape')
                 pass
             else:
                 # Caso delle emoticon: devo sostituire il carattere '\' con '\\' per evitare che il DBMS lo tratti come carattere di escape.
@@ -518,7 +517,7 @@ class RelationalDbHandler:
         """
         Ritorna il numero di parole in comune tra la risorsa lessicale e il sentimento.
         :param lex_resource: risorsa lessicale in input
-        :param sentiment:  sentimento in input
+        :param sentiment: sentimento in input
         :return: conteggio delle parole in comune tra la risorsa lessicale e l'input.
         """
 
@@ -557,7 +556,7 @@ class RelationalDbHandler:
     """
 
     def token_most_present(self, token_type: int, sentiment: str, limit: int):
-        """[summary]
+        """
         Restituisce i token più presenti nei tweet relativi al sentimento `sentiment` con rispettive occorrenze.
         Si deve specificare il tipo del token e il numero delle parole massime che devono essere restituite
         :param token_type: tipologia di token da recuperare (WORD_TYPE = 0, EMOJI_TYPE = 1, EMOTICON_TYPE = 2, HASHTAG_TYPE = 3)
@@ -579,5 +578,34 @@ class RelationalDbHandler:
         self.__db.commit()
         self.__close_connection()
 
-        #return [(r[0], r[1]) for r in result]
+        # return [(r[0], r[1]) for r in result]
         return {r[0]: r[1] for r in result}
+
+
+    def new_words(self, sentiment: str) -> list:
+        """
+        Restituisce, per ogni sentimento, le parole presenti nei tweets ad esso associato che
+        non sono presenti all'interno delle risorse lessicali
+        :param sentiment: sentimento da utilizzare
+        """
+        statement = "SELECT token.text \
+            FROM tweet join contained_in on tweet.id = contained_in.tweet_id \
+                join token on token.id = contained_in.token_id \
+            WHERE token.type = 0 and tweet.sentiment_id = '{}' \
+            EXCEPT \
+            SELECT token.text \
+            FROM tweet join contained_in on tweet.id = contained_in.tweet_id \
+                join token on token.id = contained_in.token_id \
+                join in_resource on token.id = in_resource.token_id \
+                join lexical_resource on lexical_resource.id = in_resource.lexical_resource_id \
+            WHERE token.type = 0 and lexical_resource.sentiment_id = tweet.sentiment_id and tweet.sentiment_id = '{}';" \
+                .format(sentiment, sentiment)
+            
+        self.__open_connection(self.DB_NAME)
+        self.__cursor.execute(statement)
+        result = self.__cursor.fetchall()
+
+        self.__db.commit()
+        self.__close_connection()
+
+        return [r[0] for r in result]

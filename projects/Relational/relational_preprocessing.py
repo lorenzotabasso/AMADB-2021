@@ -65,12 +65,6 @@ class Preprocessor:
         self.__punctuation = self.__read_punctuation(self.__PUNCTUATION_PATH)
         self.__stopwords = set(nltk.corpus.stopwords.words('english'))
 
-    def get(self):
-        # Semplici print di controllo. TODO: rimuoverlo.
-        print("SLANG: {0}".format(self.__slang_words))
-        print("PUNCTUATION: {0}".format(self.__punctuation))
-        print("STOPWORDS: {0}".format(self.__stopwords))
-
     """
     Class of method for parsing utility files
     """
@@ -357,7 +351,6 @@ class Preprocessor:
         # print(filtered_words)
 
         # Insert words in Database
-
         for word in filtered_words:
             word_id = self.__words.get(word[0])
 
@@ -366,6 +359,30 @@ class Preprocessor:
                 word_id = self.__max_token_id
 
             self.__add_data_contained_in(self.__max_tweet_id, word_id, word[1])
+
+        
+    def common_world_removal(self) -> None:
+        """
+
+        """
+        from collections import Counter
+
+        cnt = Counter()
+        for text in values:
+            for word in text.split():
+                cnt[word] += 1
+                
+        cnt.most_common(10)
+
+        # Removing the frequent words
+        freq = set([w for (w, _) in cnt.most_common(10)])
+        # function to remove the frequent words
+        def freqwords(text):
+            return " ".join([word for word in str(text).split() if word not 
+        in freq])
+        # Passing the function freqwords
+
+
 
 
     def write_to_db(self) -> None:
@@ -418,8 +435,8 @@ if __name__ == "__main__":
                 # print('{}:\t{}'.format(count, line))
                 count += 1
                 prep.preprocess(line, current_sentiment_name)
-                # if count == 100:
-                #     break
+                if count == 1000:
+                    break
                     
             print('Scrittura su database.')
             prep.write_to_db()

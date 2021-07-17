@@ -1,14 +1,10 @@
+from pathlib import Path
+from relationaldbhandler import RelationalDbHandler
 from wordcloud import WordCloud
+import pandas as pd
 
-from projects.relational.relationaldbhandler import RelationalDbHandler
 
-
-if __name__ == '__main__':
-    handler = RelationalDbHandler()
-
-    all_sentiments = handler.get_all_sentiments()
-    n_most_presents_token = 100
-
+def print_and_save_wc(handler, all_sentiments, n_most_presents_token):
     for s in all_sentiments:
         lex_resources = handler.get_all_lex_resources_for_sentiment(s)
         for lr in lex_resources:
@@ -26,17 +22,42 @@ if __name__ == '__main__':
             print("\tperc_presence_lex_res: {0:.6f}".format(perc_presence_lex_res))
             print("\tperc_presence_twitter: {0:.6f}\n".format(perc_presence_twitter))
 
-        print(f"Finding first {n_most_presents_token} most present tokens")
-        most_present_token = handler.token_most_present(0, s, n_most_presents_token)
+            print(f"Finding first {n_most_presents_token} most present tokens")
+            most_present_token = handler.token_most_present(0, s, n_most_presents_token)
+            
+            wc = WordCloud(background_color='white', width=400, height=200)
+            wc.fit_words(most_present_token)
+            wc.to_file(f'output/wordcloud/cloud_{s}.png')
 
-        wc = WordCloud(background_color='white', width=400, height=200)
-        wc.fit_words(most_present_token)
-        wc.to_file(f'output/wc_{s}.png')
+            # path_output = Path('.') / 'output '/ 'wordcloud' / f'cloud_{s}.png'
 
-        print("\tDone\n")
+def build_new_resource(handler: RelationalDbHandler, resource_path: Path) -> None:
+    """
+    Creo un nuovo file contenente le nuove parole associate a un sentimento provenienti dai tweet
+    Utilizzando pandas DataFrame
+    :param handler: il nostro gestore del db
+    :type handler: RelationalDbHandler
+    :param resource_path: percorso nella cartella
+    :type resource_path: Path
+    """
+    s_list = handler.get_sentiments()
+    new_resources = pd.DataFrame(columns=s_list)
 
-        # Plotting the word cloud
-        # plt.figure(figsize=[450, 250])
-        # plt.imshow(wc, interpolation='bilinear')
-        # plt.axis("off")
-        # plt.show()
+    for sentiment in s_list:
+        new_words = handler.new_words(sentiment)
+        new_resources[sentiment] =  pd.Series(new_words)
+    
+    new_resources.to_csv(resource_path)
+
+if __name__ == '__main__':
+    handler = RelationalDbHandler()
+
+    all_sentiments = handler.get_all_sentiments()
+    n_most_presents_token = 100
+
+    print_and_save_wc(handler, all_sentiments, n_most_presents_token)
+
+    new_res_path = Path('.') / 'output' / 'new_sentiments.csv'
+    build_new_resource(handler, new_res_path)
+
+
