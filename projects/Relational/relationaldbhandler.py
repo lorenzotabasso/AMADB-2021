@@ -42,14 +42,14 @@ class RelationalDbHandler:
                     user=self.DB_USER,
                     password=self.DB_PASS,
                     database=database_name,
-                    charset="utf8mb4"
+                    #charset="utf8mb4"
                 )
             else:
                 self.__db = mysql.connector.connect(
                     host=self.DB_HOST,
                     user=self.DB_USER,
                     password=self.DB_PASS,
-                    charset="utf8mb4"
+                    #charset="utf8mb4"
                 )
         except mysql.connector.Error as err:
             print(err, file=stderr)

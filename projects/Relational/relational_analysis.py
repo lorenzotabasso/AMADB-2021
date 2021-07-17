@@ -2,7 +2,6 @@ from pathlib import Path
 from relationaldbhandler import RelationalDbHandler
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 from collections import defaultdict
 
@@ -11,7 +10,6 @@ def print_and_save_wc(handler, all_sentiments, n_most_presents_token):
     for s in all_sentiments:
         lex_resources = handler.get_all_lex_resources_for_sentiment(s)
         d = defaultdict(list)
-        d2 = defaultdict(list)
 
         for lr in lex_resources:
             n_lex_words = handler.get_n_lex_words(lr)
@@ -45,7 +43,7 @@ def print_and_save_wc(handler, all_sentiments, n_most_presents_token):
                 ylabel='Percentage',
                 kind="bar",
                 rot=0)
-        plt.show()
+        #plt.show()
         print("\tSaving plot to disk")
         plt.savefig(f'output/plot/plot_{s}.png')
         print("\tDone")
@@ -61,6 +59,7 @@ def print_and_save_wc(handler, all_sentiments, n_most_presents_token):
         print("\tSaving word cloud to disk")
         print("\tDone\n")
 
+
 def build_new_resource(handler: RelationalDbHandler, resource_path: Path) -> None:
     """
     Creo un nuovo file contenente le nuove parole associate a un sentimento provenienti dai tweet
@@ -70,6 +69,7 @@ def build_new_resource(handler: RelationalDbHandler, resource_path: Path) -> Non
     :param resource_path: percorso nella cartella
     :type resource_path: Path
     """
+    print("Building new resource")
     s_list = handler.get_sentiments()
     new_resources = pd.DataFrame(columns=s_list)
 
@@ -78,6 +78,8 @@ def build_new_resource(handler: RelationalDbHandler, resource_path: Path) -> Non
         new_resources[sentiment] =  pd.Series(new_words)
     
     new_resources.to_csv(resource_path)
+    print("Done")
+
 
 if __name__ == '__main__':
     handler = RelationalDbHandler()
@@ -89,5 +91,3 @@ if __name__ == '__main__':
 
     new_res_path = Path('.') / 'output' / 'new_sentiments.csv'
     build_new_resource(handler, new_res_path)
-
-
