@@ -161,4 +161,5 @@ fabric.properties
 .idea/codestream.xml
 
 /.idea
-/output/
+/output/**
+output/new_sentiments.csv

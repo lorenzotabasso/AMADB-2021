@@ -135,22 +135,12 @@ def stats_on_lexical_r(handler, all_sentiments):
                 kind="bar",
                 rot=0)
         #plt.show()
+
         print("\tSaving plot to disk")
-        plt.savefig(f'output/plot/plot_{s}.png')
-        print("\tDone")
+        path_output = Path('.') / 'output' / 'histogram' / f'histogram_{s}.png'
+        plt.savefig(path_output)
 
-        print("Creating word cloud")
-        print(f"\tFinding first {n_most_presents_token} most present tokens")
-        most_present_token = handler.token_most_present(0, s, n_most_presents_token)
-        wc = WordCloud(background_color='white', width=400, height=200)
-        wc.fit_words(most_present_token)
-        wc.to_file(f'output/wordcloud/cloud_{s}.png')
-
-        # path_output = Path('.') / 'output '/ 'wordcloud' / f'cloud_{s}.png'
-        print("\tSaving word cloud to disk")
-        print("\tDone\n")
-
-
+        
 def build_new_resource(handler: RelationalDbHandler, resource_path: Path) -> None:
     """
     Creo un nuovo file contenente le nuove parole associate a un sentimento provenienti dai tweet
@@ -177,8 +167,12 @@ if __name__ == '__main__':
 
     all_sentiments = handler.get_all_sentiments()
 
-    # stats_on_lexical_r(handler, all_sentiments)
-    print_all_word_clouds(handler)
+    stats_on_lexical_r(handler, all_sentiments)
 
+    print("Creating word cloud")
+    # print_all_word_clouds(handler)
+    print("\tSaving word cloud to disk")
+
+    print("Storing new sentiments")
     new_res_path = Path('.') / 'output' / 'new_sentiments.csv'
     build_new_resource(handler, new_res_path)
