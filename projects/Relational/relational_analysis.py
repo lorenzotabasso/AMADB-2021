@@ -26,15 +26,17 @@ if __name__ == '__main__':
             print("\tperc_presence_lex_res: {0:.6f}".format(perc_presence_lex_res))
             print("\tperc_presence_twitter: {0:.6f}\n".format(perc_presence_twitter))
 
-            print(f"Finding first {n_most_presents_token} most present tokens")
-            most_present_token = handler.token_most_present(0, s, n_most_presents_token)
+        print(f"Finding first {n_most_presents_token} most present tokens")
+        most_present_token = handler.token_most_present(0, s, n_most_presents_token)
 
-            wc = WordCloud(background_color='white', width=400, height=200)
-            wc.fit_words(most_present_token)
-            wc.to_file(f'output/wc_{s}.png')
+        wc = WordCloud(background_color='white', width=400, height=200)
+        wc.fit_words(most_present_token)
+        wc.to_file(f'output/wc_{s}.png')
 
-            # Plotting the word cloud
-            # plt.figure(figsize=[450, 250])
-            # plt.imshow(wc, interpolation='bilinear')
-            # plt.axis("off")
-            # plt.show()
+        print("\tDone\n")
+
+        # Plotting the word cloud
+        # plt.figure(figsize=[450, 250])
+        # plt.imshow(wc, interpolation='bilinear')
+        # plt.axis("off")
+        # plt.show()
