@@ -315,8 +315,7 @@ class Preprocessor:
         ✓ Eliminare Stop Words
         ✓ Gestire le emoji/Emoticons
         ✓ Lemmatizzare parole 
-        1. Memorizzare le parole nuove
-        2. Conteggiare presenza nei tweet delle parole associate a ogni sentimento
+        ✓ Memorizzare le parole nuove
         '''
         self.__add_data_tweet(sentiment)
 
