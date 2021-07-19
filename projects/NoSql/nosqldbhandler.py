@@ -284,3 +284,17 @@ class NoSqlDbHandler:
             tweets.append((x['sentiment'], x['words']))
         
         return tweets
+    
+    def get_common_words(self) -> list:
+        """
+        :return: Restituisce la lista delle common_words
+        :rtype: list
+        """
+        tweets = []
+        collection = self.__db[self.__COLLECTION_COMMON_WORDS]
+
+        for x in collection.find():
+            tweets.append((x['lexical_resource'], x['sentiment'], x['words']))
+        
+        return tweets
+
