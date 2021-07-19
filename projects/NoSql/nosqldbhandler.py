@@ -4,6 +4,35 @@ from pathlib import Path
 import os
 
 
+class WordList:
+    """
+    Because Python has multiple inheritance possiamo definire una classe meta
+    da utilizzare successivamente.
+    """
+    def __init__(self,  words=None) -> None:
+        if words is None:
+            self.__words = []
+        else:
+            self.__words = words
+
+    def add_word(self, new_word: str) -> None:
+        """
+        Aggiunge una sola parola alla lista
+        :param new_word: parola
+        :type new_word: str
+        """
+        self.__words.append(new_word)
+
+    def add_words(self, new_words: set) -> None:
+        """
+        Estende la lista di parole con un'ulteriore lista
+        :param: new_word: parola
+        :type: new_word: str
+        """
+        words = list(new_words)
+        self.__words.extend(words)
+
+
 class Sentiment:
     """
     Classe che rappresenta il singolo sentimento
@@ -24,7 +53,7 @@ class Sentiment:
         return representation
 
 
-class Lexical_resource:
+class Lexical_resource(WordList):
     """
     Classe che rappresenta la risorsa lessicale
     Caraterizzata dal nome, dal sentimento a cui si riferisce,
@@ -36,41 +65,24 @@ class Lexical_resource:
         self.__name = name
         self.__sentiment = sentiment
         if words is None:
-            self.__words = []
+            self._WordList__words = []
         else:
-            self.__words = words
+            self._WordList__words = words
         self.__id = id
 
     def to_dict(self) -> dict:
         representation = {
             'name': self.__name,
             'sentiment': self.__sentiment,
-            'words': self.__words
+            'words': self._WordList__words
         }
         if self.__id is not None:
             representation.update({'_id': self.__id})
 
         return representation
 
-    def add_word(self, new_word: str) -> None:
-        """
-        Aggiunge una sola parola alla lista
-        :param new_word: parola
-        :type new_word: str
-        """
-        self.__words.append(new_word)
 
-    def add_words(self, new_words: set) -> None:
-        """
-        Estende la lista di parole con un'ulteriore lista
-        :param: new_word: parola
-        :type: new_word: str
-        """
-        words = list(new_words)
-        self.__words.extend(words)
-
-
-class Tweet:
+class Tweet(WordList):
     """
     Classe che rappresenta il singolo tweet, simile a :class:`Lexical_resource`.
     Caraterizzata dal sentimento a cui si riferisce,
@@ -82,36 +94,46 @@ class Tweet:
         self.__id = id
         self.__sentiment = sentiment
         if words is None:
-            self.__words = []
+            self._WordList__words = []
         else:
-            self.__words = words
+            self._WordList__words = words
         self.__id = id
 
     def to_dict(self) -> dict:
         representation = {
             'sentiment': self.__sentiment,
-            'words': self.__words
+            'words': self._WordList__words
         }
         if self.__id is not None:
             representation.update({'_id': self.__id})
 
         return representation
 
-    def add_word(self, new_word: str) -> None:
-        """
-        Aggiunge una sola parola alla lista
-        :param new_word: parola
-        :type new_word: str
-        """
-        self.__words.append(new_word)
+class Common_words(WordList):
+    """
+    Classe che rappresenta un join tra i tweets e le risorse lessicali
+    Il focus è sulle parole in comune tra i due dato un sentimento e la risorsa lessicale.
+    Presenza del proprio identificatore univoco
+    """
+    def __init__(self, sentiment: str, lexical_resource: str, words=None, id=None) -> None:
+        self.__sentiment = sentiment
+        self.__lexical_resource = lexical_resource
+        if words is None:
+            self._WordList__words = []
+        else:
+            self._WordList__words = words
+        self.__id = id
 
-    def add_words(self, new_words: list) -> None:
-        """
-        Estende la lista di parole con un'ulteriore lista
-        :param: new_word: parola
-        :type: new_word: str
-        """
-        self.__words.extend(new_words)
+    def to_dict(self) -> dict:
+        representation = {
+            'sentiment': self.__sentiment,
+            'lexical_resource': self.__lexical_resource,
+            'words': self._WordList__words
+        }
+        if self.__id is not None:
+            representation.update({'_id': self.__id})
+
+        return representation
 
 
 class NoSqlDbHandler:
@@ -191,6 +213,16 @@ class NoSqlDbHandler:
         collection = self.__db[self.__COLLECTION_TWEETS]
 
         collection.insert_many(map(lambda x: x.to_dict(), tweets))
+    
+    def load_common_words(self, common_words: list) -> None:
+        """
+        Inserimento delle paroli comuni tra tweets e risorse lessicali
+        :param common_words: lista di common words
+        :type common_words: list
+        """
+        collection = self.__db[self.__COLLECTION_COMMON_WORDS]
+
+        collection.insert_many(map(lambda x: x.to_dict(), common_words))
 
     def drop_tweets(self) -> None:
         """
@@ -198,6 +230,8 @@ class NoSqlDbHandler:
         """
         collection = self.__db[self.__COLLECTION_TWEETS]
         collection.drop()
+
+
 
     def get_sentiments(self) -> list:
         """
