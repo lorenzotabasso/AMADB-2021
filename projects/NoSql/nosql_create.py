@@ -24,6 +24,9 @@ if __name__ == "__main__":
     # Tweets
     dataset_dir = data_path / 'twitter-messages'
 
+    # Drop dei tweets
+    no_sql_handler.drop_tweets()
+
     for file_name in os.listdir(dataset_dir):
         file_path = dataset_dir / file_name
 
@@ -47,7 +50,7 @@ if __name__ == "__main__":
                 count += 1
                 tweets.append(prep.preprocess(line, current_sentiment_name))
                 # if count == 1000:
-                # break
+                    # break
 
             print('Scrittura su database.')
             no_sql_handler.load_tweets(tweets)

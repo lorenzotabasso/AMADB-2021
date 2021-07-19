@@ -126,15 +126,9 @@ class Preprocessor_NoSql:
         # pos tagging
         tagged_words = pos_tag(
             tokenized_words, tagset='universal')
-        # lowering cases
-        tagged_words = [(w[0].lower(), w[1])
-                        for w in tagged_words]
-        # lemmatizzazione
-        lemmatized_tagged_words = [(lemmatizer.lemmatize(
-            w[0]), w[1]) for w in tagged_words]
-        # remove stopwords
-        filtered_words = [w for w in lemmatized_tagged_words if not w[0]
-                          in self.__stopwords]
+        tagged_words = [w[0].lower() for w in tagged_words] # lower case 
+        lemmatized_tagged_words = [lemmatizer.lemmatize(w) for w in tagged_words] # lemmatizer
+        filtered_words = [w for w in lemmatized_tagged_words if not w in self.__stopwords] # remove stopwords
 
         return filtered_words
 

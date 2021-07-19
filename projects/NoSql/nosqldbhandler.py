@@ -9,6 +9,7 @@ class WordList:
     Because Python has multiple inheritance possiamo definire una classe meta
     da utilizzare successivamente.
     """
+
     def __init__(self,  words=None) -> None:
         if words is None:
             self.__words = []
@@ -109,13 +110,15 @@ class Tweet(WordList):
 
         return representation
 
+
 class Common_words(WordList):
     """
     Classe che rappresenta un join tra i tweets e le risorse lessicali
     Il focus è sulle parole in comune tra i due dato un sentimento e la risorsa lessicale.
     Presenza del proprio identificatore univoco
     """
-    def __init__(self, sentiment: str, lexical_resource: str, words=None, id=None) -> None:
+
+    def __init__(self, lexical_resource: str, sentiment: str, words=None, id=None) -> None:
         self.__sentiment = sentiment
         self.__lexical_resource = lexical_resource
         if words is None:
@@ -213,7 +216,7 @@ class NoSqlDbHandler:
         collection = self.__db[self.__COLLECTION_TWEETS]
 
         collection.insert_many(map(lambda x: x.to_dict(), tweets))
-    
+
     def load_common_words(self, common_words: list) -> None:
         """
         Inserimento delle paroli comuni tra tweets e risorse lessicali
@@ -231,7 +234,16 @@ class NoSqlDbHandler:
         collection = self.__db[self.__COLLECTION_TWEETS]
         collection.drop()
 
+    def drop_common_words(self) -> None:
+        """
+        Droppa dal db la collezione relativa alle common_words
+        """
+        collection = self.__db[self.__COLLECTION_COMMON_WORDS]
+        collection.drop()
 
+    """ 
+    Getter methods
+    """
 
     def get_sentiments(self) -> list:
         """
@@ -259,3 +271,16 @@ class NoSqlDbHandler:
             lexical_resources.append((x['name'], x['sentiment'], x['words']))
 
         return lexical_resources
+
+    def get_tweets(self) -> list:
+        """
+        :return: Restituisce la lista dei tweets
+        :rtype: list
+        """
+        tweets = []
+        collection = self.__db[self.__COLLECTION_TWEETS]
+
+        for x in collection.find():
+            tweets.append((x['sentiment'], x['words']))
+        
+        return tweets
