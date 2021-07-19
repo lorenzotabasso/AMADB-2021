@@ -1,27 +1,28 @@
-import time
+from relational_preprocessing import Preprocessor
 from relationaldbhandler import RelationalDbHandler
-from pathlib import Path
+
+import unittest
+
+class RelationalTest(unittest.TestCase):
+
+    def test_sentiments(self):
+        handler = RelationalDbHandler()
+        sentiments = ['anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness', 'surprise', 'trust']
+        self.assertEqual(handler.read_attributes(), sentiments)
+
 
 if __name__ == '__main__':
-    sentiments = ['anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness', 'surprise', 'trust']
 
-    data_path = Path('../..') / 'data'
+    handler = RelationalDbHandler()
+    limit = 7
 
-    db_creator = RelationalDbHandler()
+    for sentiment in handler.read_attributes():
+        most_present_w = handler.token_most_present(handler.WORD_TYPE, sentiment, limit)
+        most_present_j = handler.token_most_present(handler.EMOJI_TYPE, sentiment, limit)
+        most_present_e = handler.token_most_present(handler.EMOTICON_TYPE, sentiment, limit)
+        most_present_h = handler.token_most_present(handler.HASHTAG_TYPE, sentiment, limit)
+        print(f'For sentiment {sentiment} the top {limit} tokens most present are:\
+        \n{most_present_w}\n{most_present_j}\n{most_present_e}\n{most_present_h}\n')
 
-    # start = time.time()
-    #
-    # print('Creazione del database relazionale.')
-    # sql_file_path = data_path / 'mariadb.sql'
-    # db_creator.create(sql_file_path)
-    #
-    # print('Inserimento delle risorse lessicali.')
-    # dataset_dir = data_path / 'lexical-resources' / 'Sentiments'
-    # db_creator.load_lexical_resources(dataset_dir)
-    #
-    # end = time.time()
-    # print('Inserimento in MariaDB: {:.2f} secondi'.format(end - start))
-
-    print('Inserimento dei twitter messages.')
-    twitter_messages_dir = data_path / 'twitter-messagges'
-    db_creator.load_twitter_messages(twitter_messages_dir)
+    unittest.main()
+    
