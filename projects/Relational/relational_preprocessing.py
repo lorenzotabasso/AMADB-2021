@@ -312,8 +312,8 @@ class Preprocessor:
         Dato un messaggio in ingresso, viene ripulito da caratteri inutili, 
         stop words, emoji/emoticons, punteggiatura, abbreviazioni e
         processate da nltk.
-        Inoltre vengono salvati, prima in memoria e poi resi persitenti, 
-        alcuni metadati come 
+        Oltre alle singole parole vengono salvati, prima in memoria e poi resi persitenti, 
+        alcuni metadati come hashtag nuovi, emoticon e emoji non presenti nel DB
         :param msg: [description]
         :type msg: str
         :param sentiment: [description]

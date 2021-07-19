@@ -462,6 +462,34 @@ class RelationalDbHandler:
 
         return [r[1] for r in result]
 
+    """ 
+    Query complesse per l'output
+    """
+
+    def token_most_present(self, token_type: int, sentiment: str, limit: int):
+        """
+        Restituisce i token più presenti nei tweet relativi al sentimento `sentiment` con rispettive occorrenze.
+        Si deve specificare il tipo del token e il numero delle parole massime che devono essere restituite
+        :param token_type: tipologia di token da recuperare (WORD_TYPE = 0, EMOJI_TYPE = 1, EMOTICON_TYPE = 2, HASHTAG_TYPE = 3)
+        :param sentiment: sentimento da interrogare
+        :param limit: upper bound
+        """
+        statement = "SELECT token.text, count(contained_in.id) \
+            FROM tweet join contained_in on tweet.id = contained_in.tweet_id \
+                join token on token.id = contained_in.token_id \
+            WHERE token.type = {} AND tweet.sentiment_id = '{}' \
+            GROUP BY tweet.sentiment_id, token.text, contained_in.part_of_speech \
+            ORDER BY count(contained_in.id) DESC \
+            LIMIT {};".format(token_type, sentiment, limit)
+
+        self.__open_connection(self.DB_NAME)
+        self.__cursor.execute(statement)
+        result = self.__cursor.fetchall()
+
+        self.__db.commit()
+        self.__close_connection()
+
+        return [(r[0], r[1]) for r in result]
 
     def get_n_lex_words(self, lex_resource) -> int:
         """
@@ -521,14 +549,6 @@ class RelationalDbHandler:
         :return: conteggio delle parole in comune tra la risorsa lessicale e l'input.
         """
 
-        #statement = "SELECT COUNT(t.id) \
-        #            FROM token t JOIN in_resource ir ON t.id = ir.token_id  \
-        #            JOIN lexical_resource lr ON ir.lexical_resource_id = lr.id \
-        #            JOIN contained_in ci ON t.id = ci.token_id  \
-        #            JOIN tweet tw ON ci.id = tw.id \
-        #            JOIN sentiment s ON tw.sentiment_id = s.name \
-        #            WHERE lr.name = '{}' AND s.name = '{}';".format(lex_resource, sentiment)
-
         statement = "SELECT COUNT(t.id) \
                     FROM token t JOIN in_resource ir ON t.id = ir.token_id \
                     JOIN lexical_resource lr ON ir.lexical_resource_id = lr.id \
@@ -551,37 +571,6 @@ class RelationalDbHandler:
         # La struttura è del formato [(354,)], per questo il [0][0] finale
         return result[0][0]
 
-    """ 
-    Query complesse per l'output
-    """
-
-    def token_most_present(self, token_type: int, sentiment: str, limit: int):
-        """
-        Restituisce i token più presenti nei tweet relativi al sentimento `sentiment` con rispettive occorrenze.
-        Si deve specificare il tipo del token e il numero delle parole massime che devono essere restituite
-        :param token_type: tipologia di token da recuperare (WORD_TYPE = 0, EMOJI_TYPE = 1, EMOTICON_TYPE = 2, HASHTAG_TYPE = 3)
-        :param sentiment: sentimento da interrogare
-        :param limit: upper bound
-        """
-        statement = "SELECT token.text, count(contained_in.id) \
-            FROM tweet join contained_in on tweet.id = contained_in.tweet_id \
-                join token on token.id = contained_in.token_id \
-            WHERE token.type = {} AND tweet.sentiment_id = '{}' \
-            GROUP BY tweet.sentiment_id, token.text, contained_in.part_of_speech \
-            ORDER BY count(contained_in.id) DESC \
-            LIMIT {};".format(token_type, sentiment, limit)
-
-        self.__open_connection(self.DB_NAME)
-        self.__cursor.execute(statement)
-        result = self.__cursor.fetchall()
-
-        self.__db.commit()
-        self.__close_connection()
-
-        return [(r[0], r[1]) for r in result]
-        # return {r[0]: r[1] for r in result}
-
-
     def new_words(self, sentiment: str) -> list:
         """
         Restituisce, per ogni sentimento, le parole presenti nei tweets ad esso associato che
@@ -600,7 +589,7 @@ class RelationalDbHandler:
                 join lexical_resource on lexical_resource.id = in_resource.lexical_resource_id \
             WHERE token.type = 0 and lexical_resource.sentiment_id = tweet.sentiment_id and tweet.sentiment_id = '{}';" \
                 .format(sentiment, sentiment)
-            
+
         self.__open_connection(self.DB_NAME)
         self.__cursor.execute(statement)
         result = self.__cursor.fetchall()
