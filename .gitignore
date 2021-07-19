@@ -161,5 +161,9 @@ fabric.properties
 .idea/codestream.xml
 
 /.idea
-/output/**
-output/new_sentiments.csv
+
+# Output folder and its content
+/output/
+
+# Lorenzo VENV folder
+/venv/
