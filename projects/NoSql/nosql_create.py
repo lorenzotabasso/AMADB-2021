@@ -46,12 +46,12 @@ if __name__ == "__main__":
                 # print('{}:\t{}'.format(count, line))
                 count += 1
                 tweets.append(prep.preprocess(line, current_sentiment_name))
-                if count == 1000:
-                    break
+                # if count == 1000:
+                # break
 
             print('Scrittura su database.')
             no_sql_handler.load_tweets(tweets)
-        
+
         end = time.time()
         print('Processamento del file {} compiuto in {:.2f} secondi'.format(
             file_name, end - start))

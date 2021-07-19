@@ -198,7 +198,6 @@ class Preprocessor:
             self.__add_data_contained_in(self.__max_tweet_id, hashtag_id)
 
         return msg
-    
 
     def __process_emo(self, msg: str) -> str:
         """
@@ -220,7 +219,7 @@ class Preprocessor:
                 is_emoji_or_emoticon = True
 
             if is_emoji_or_emoticon:
-                msg = msg.replace(word, "") # rimozione emoji
+                msg = msg.replace(word, "")  # rimozione emoji
                 self.__add_data_contained_in(
                     self.__max_tweet_id, emo_id, None)  # update dict & table
 
@@ -309,8 +308,18 @@ class Preprocessor:
         return filtered_words
 
     def preprocess(self, msg: str, sentiment: str) -> None:
+        """
+        Dato un messaggio in ingresso, viene ripulito da caratteri inutili, 
+        stop words, emoji/emoticons, punteggiatura, abbreviazioni e
+        processate da nltk.
+        Inoltre vengono salvati, prima in memoria e poi resi persitenti, 
+        alcuni metadati come 
+        :param msg: [description]
+        :type msg: str
+        :param sentiment: [description]
+        :type sentiment: str
+        """        """"""
         '''
-        TODO:
         ✓ Rimuovere USERNAME e URL
         ✓ Eliminare Stop Words
         ✓ Gestire le emoji/Emoticons
@@ -347,7 +356,6 @@ class Preprocessor:
 
             self.__add_data_contained_in(self.__max_tweet_id, word_id, word[1])
 
-        
     def write_to_db(self) -> None:
         """
         Ogni lista presente in __data viene resa persistente, tramite
@@ -360,7 +368,8 @@ class Preprocessor:
         self.__handler.load_tokens_batch(self.__data[self.__DATA_TOKENS])
         self.__data[self.__DATA_TOKENS] = []
 
-        self.__handler.load_contained_ins_batch(self.__data[self.__DATA_CONTAINED_INS])
+        self.__handler.load_contained_ins_batch(
+            self.__data[self.__DATA_CONTAINED_INS])
         self.__data[self.__DATA_CONTAINED_INS] = []
 
 
@@ -375,7 +384,7 @@ if __name__ == "__main__":
 
     # Test gestione twitter
     print('Inserimento dei twitter messages.')
-    
+
     total_time = 0
 
     for file_name in os.listdir(dataset_dir):
@@ -399,8 +408,8 @@ if __name__ == "__main__":
                 count += 1
                 prep.preprocess(line, current_sentiment_name)
                 # if count == 1000:
-                    # break
-                    
+                # break
+
             print('Scrittura su database.')
             prep.write_to_db()
 

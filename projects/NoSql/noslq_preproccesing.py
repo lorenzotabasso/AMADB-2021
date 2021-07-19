@@ -5,7 +5,7 @@ import emoji
 from nltk.corpus import stopwords
 from nltk import WordNetLemmatizer, word_tokenize, pos_tag
 
-from nosqldbhandler import Tweet, NoSqlDbHandler
+from nosqldbhandler import Tweet
 
 
 class Preprocessor_NoSql:

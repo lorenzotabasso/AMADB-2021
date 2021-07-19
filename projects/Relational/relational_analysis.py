@@ -31,7 +31,7 @@ def common_world_removal(list_tokens: list) -> None:
     cnt = Counter()
     for elem in list_tokens:
         cnt[elem] += 1
-            
+
     cnt.most_common(10)
 
     # Removing the frequent words
@@ -45,7 +45,7 @@ def common_world_removal(list_tokens: list) -> None:
     return list(result)
 
 
-def save_word_cloud (list_token: list, sentiment: str, token_type: int) -> None:
+def save_word_cloud(list_token: list, sentiment: str, token_type: int) -> None:
     """
     salva in "Output/Word Clouds" le word clouds relative ai vari parametri.
     :param list_token: [description]
@@ -55,23 +55,27 @@ def save_word_cloud (list_token: list, sentiment: str, token_type: int) -> None:
     input_wordcloud = ""
     for token, freq in list_token:
         input_wordcloud += (token+" ")*freq
-    
+
     normal_word = r"(?:\w[\w']+)"
-    ascii_art = r"(?:[{punctuation}][{punctuation}]+)".format(punctuation=string.punctuation)
-    emoji = r"(?:[^\s])(?<![\w{ascii_printable}])".format(ascii_printable=string.printable)
+    ascii_art = r"(?:[{punctuation}][{punctuation}]+)".format(
+        punctuation=string.punctuation)
+    emoji = r"(?:[^\s])(?<![\w{ascii_printable}])".format(
+        ascii_printable=string.printable)
     regexp = fr"{normal_word}|{ascii_art}|{emoji}"
 
     font_path = path.join("font", "symbola.ttf")
-    wordcloud = WordCloud(font_path=font_path, regexp=regexp, collocations=False).generate(input_wordcloud)
+    wordcloud = WordCloud(font_path=font_path, regexp=regexp,
+                          collocations=False).generate(input_wordcloud)
 
     plt.figure(facecolor=None)
-    plt.imshow(wordcloud) 
-    plt.axis("off") 
+    plt.imshow(wordcloud)
+    plt.axis("off")
     plt.tight_layout(pad=0)
 
     token_type_str = MAP_TOKEN_TYPE.get(token_type)
 
-    path_output = Path('.') / 'output' / 'wordcloud' / "{}".format(token_type_str) / 'cloud_{}_{}.png'.format(sentiment, token_type_str)
+    path_output = Path('.') / 'output' / 'wordcloud' / "{}".format(
+        token_type_str) / 'cloud_{}_{}.png'.format(sentiment, token_type_str)
     plt.savefig(path_output)
     plt.close()
 
@@ -81,12 +85,13 @@ def world_cloud(db_interface: RelationalDbHandler, sentiment: str, token_type: i
     chiama il salvataggio della word cloud relativa al sentimento `sentiment`
     relativa ai token di tipo `token_type` con `limit` parole al suo interno
     """
-    
+
     tokens = db_interface.token_most_present(token_type, sentiment, limit)
     if token_type == 0:
         tokens = tokens[5:]
     save_word_cloud(tokens, sentiment, token_type)
-    print(f"\tSaved word cloud for sentiment {sentiment}: {MAP_TOKEN_TYPE[token_type]}")
+    print(
+        f"\tSaved word cloud for sentiment {sentiment}: {MAP_TOKEN_TYPE[token_type]}")
 
 
 def print_all_word_clouds(db_interface: RelationalDbHandler) -> None:
@@ -104,11 +109,13 @@ def print_all_word_clouds(db_interface: RelationalDbHandler) -> None:
                       NUM_EMOJI_WC,
                       NUM_EMOTICON_WC,
                       NUM_HASHTAG_WC]
-    
+
     for sentiment in sentiments:
-        print(f"\nFinding first 50 most present tokens for sentiment {sentiment}")
+        print(
+            f"\nFinding first 50 most present tokens for sentiment {sentiment}")
         for i in range(len(token_types)):
-            world_cloud(db_interface, sentiment, token_types[i], num_word_cloud[i])
+            world_cloud(db_interface, sentiment,
+                        token_types[i], num_word_cloud[i])
 
 
 def stats_on_lexical_r(handler, all_sentiments):
@@ -128,8 +135,10 @@ def stats_on_lexical_r(handler, all_sentiments):
             print("\tn_lex_words: {0}".format(n_lex_words))
             print("\tn_twitter_words: {0}".format(n_twitter_words))
             print("\tshared_words: {0}".format(shared_words))
-            print("\tperc_presence_lex_res: {0:.6f}".format(perc_presence_lex_res))
-            print("\tperc_presence_twitter: {0:.6f}\n".format(perc_presence_twitter))
+            print("\tperc_presence_lex_res: {0:.6f}".format(
+                perc_presence_lex_res))
+            print("\tperc_presence_twitter: {0:.6f}\n".format(
+                perc_presence_twitter))
 
             d['sentiment'].append(s)
             d['lex_resource'].append(lr)
@@ -153,7 +162,7 @@ def stats_on_lexical_r(handler, all_sentiments):
         path_output = Path('.') / 'output' / 'histogram' / f'histogram_{s}.png'
         plt.savefig(path_output)
 
-        
+
 def build_new_resource(handler: RelationalDbHandler, resource_path: Path) -> None:
     """
     Creo un nuovo file contenente le nuove parole associate a un sentimento provenienti dai tweet
@@ -170,7 +179,7 @@ def build_new_resource(handler: RelationalDbHandler, resource_path: Path) -> Non
     for sentiment in s_list:
         new_words = handler.new_words(sentiment)
         new_resources[sentiment] = pd.Series(new_words)
-    
+
     new_resources.to_csv(resource_path)
     print("Done")
 
