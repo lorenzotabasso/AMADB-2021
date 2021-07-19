@@ -1,5 +1,5 @@
 docker-compose up -d
-Start-Sleep -Seconds 5
+Start-Sleep -Seconds 3
 
 $cmd = "echo 'rs.initiate({_id: \`"mongorsconf\`", configsvr: true, members: [{ _id : 0, host : \`"mongoconf\`" }]})' | mongo"
 docker exec -it mongoconf bash -c $cmd
@@ -10,7 +10,7 @@ docker exec -it mongoshard1 bash -c  $cmd
 $cmd ="echo 'rs.initiate({_id : \`"mongors2\`", members: [{ _id : 0, host : \`"mongoshard2\`" }]})' | mongo"
 docker exec -it mongoshard2 bash -c  $cmd
 
-Start-Sleep -Seconds 5
+Start-Sleep -Seconds 3
 
 $cmd = "echo 'sh.addShard(\`"mongors1/mongoshard1\`")' | mongo"
 docker exec -it mongorouter bash -c $cmd

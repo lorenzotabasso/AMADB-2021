@@ -73,15 +73,15 @@ services:
 
     mongo-express:
         container_name: mongoexpress
-        image: mongo-express:0.49
+        image: mongo-express
         restart: on-failure
         ports:
             - 8081:8081
         environment:
-            TERM: fish
-            TZ: ${TIMEZONE}
             ME_CONFIG_MONGODB_SERVER: "mongorouter"
+            ME_CONFIG_OPTIONS_EDITORTHEME: "ambiance"
             ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
+            ME_CONFIG_BASICAUTH_USERNAME: ""
             ME_CONFIG_MONGODB_PORT: ${MONGO_ROUTER_PORT:-27017}
         depends_on:
                 - mongorouter
