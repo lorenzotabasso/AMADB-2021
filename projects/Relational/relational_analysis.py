@@ -15,7 +15,7 @@ NUM_EMOJI_WC = 20
 NUM_EMOTICON_WC = 20
 NUM_HASHTAG_WC = 50
 
-MAP_TOKEN_TYPE = {0: "word", 1: "emoji", 2:"emoticon", 3: "hashtag"}
+MAP_TOKEN_TYPE = {0: "word", 1: "emoji", 2: "emoticon", 3: "hashtag"}
 
 
 # OVERKIll
@@ -45,7 +45,7 @@ def common_world_removal(list_tokens: list) -> None:
     return list(result)
 
 
-def save_word_cloud (list_token: list, sentiment: str, token_type:int) -> None:
+def save_word_cloud (list_token: list, sentiment: str, token_type: int) -> None:
     """
     salva in "Output/Word Clouds" le word clouds relative ai vari parametri.
     :param list_token: [description]
@@ -64,14 +64,14 @@ def save_word_cloud (list_token: list, sentiment: str, token_type:int) -> None:
     font_path = path.join("font", "symbola.ttf")
     wordcloud = WordCloud(font_path=font_path, regexp=regexp, collocations=False).generate(input_wordcloud)
 
-    plt.figure(figsize=(4, 4), facecolor=None)
+    plt.figure(facecolor=None)
     plt.imshow(wordcloud) 
     plt.axis("off") 
     plt.tight_layout(pad=0)
 
     token_type_str = MAP_TOKEN_TYPE.get(token_type)
 
-    path_output = Path('.') / 'output' / 'wordcloud' / "{}".format(token_type_str) / 'cloud_{}.png'.format(sentiment)
+    path_output = Path('.') / 'output' / 'wordcloud' / "{}".format(token_type_str) / 'cloud_{}_{}.png'.format(sentiment, token_type_str)
     plt.savefig(path_output)
     plt.close()
 
@@ -86,7 +86,7 @@ def world_cloud(db_interface: RelationalDbHandler, sentiment: str, token_type: i
     if token_type == 0:
         tokens = tokens[5:]
     save_word_cloud(tokens, sentiment, token_type)
-    print(f"\tSaved word cloud for sentiment {sentiment}")
+    print(f"\tSaved word cloud for sentiment {sentiment}: {MAP_TOKEN_TYPE[token_type]}")
 
 
 def print_all_word_clouds(db_interface: RelationalDbHandler) -> None:
@@ -106,7 +106,7 @@ def print_all_word_clouds(db_interface: RelationalDbHandler) -> None:
                       NUM_HASHTAG_WC]
     
     for sentiment in sentiments:
-        print(f"\tFinding first 50 most present tokens for sentiment {sentiment}")
+        print(f"\nFinding first 50 most present tokens for sentiment {sentiment}")
         for i in range(len(token_types)):
             world_cloud(db_interface, sentiment, token_types[i], num_word_cloud[i])
 
@@ -180,11 +180,12 @@ if __name__ == '__main__':
 
     all_sentiments = handler.get_all_sentiments()
 
+    print("Compute statistics on resources")
     stats_on_lexical_r(handler, all_sentiments)
 
-    print("Creating word cloud for each sentiment")
-    # print_all_word_clouds(handler)
+    print("\nCreating word cloud for each sentiment")
+    print_all_word_clouds(handler)
 
-    print("Storing new sentiments")
+    print("\nStoring new sentiments")
     new_res_path = Path('.') / 'output' / 'new_sentiments.csv'
     build_new_resource(handler, new_res_path)
