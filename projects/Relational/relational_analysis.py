@@ -148,14 +148,24 @@ def stats_on_lexical_r(handler, all_sentiments):
             d['perc_presence_lex_res'].append(perc_presence_lex_res)
             d['perc_presence_twitter'].append(perc_presence_twitter)
 
-        df = pd.DataFrame(data=d)
-        df.plot(title=s.capitalize(),
+        df = pd.DataFrame(data=d).round(6)
+        ax = df.plot(title=s.capitalize(),
                 x='lex_resource',
                 xlabel='Lexical Resource',
                 y=['perc_presence_lex_res', 'perc_presence_twitter'],
                 ylabel='Percentage',
                 kind="bar",
-                rot=0)
+                rot=0,
+                figsize=(8, 6),
+                legend=False
+                )
+        plt.legend(loc='upper left', bbox_to_anchor=(0.65, 1.15),
+                   fancybox=True, shadow=True)
+
+        for p in ax.patches:
+            percentage_value = str(p.get_height())
+            ax.annotate(percentage_value, (p.get_x() * 1.005, p.get_height() * 1.005))
+
         # plt.show()
 
         print("\tSaving plot to disk\n")
