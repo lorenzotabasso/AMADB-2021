@@ -1,3 +1,4 @@
+
 from nosqldbhandler import NoSqlDbHandler
 import unittest
 
@@ -13,3 +14,8 @@ class NoSqlTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+    handler = NoSqlDbHandler()
+
+    for sentiment in handler.get_sentiments():
+        w_frequency = handler.word_frequencies(sentiment, 15)
+        print(f'For sentiment {sentiment} the top 10 tokens most present are:\n{w_frequency[5:]}')
