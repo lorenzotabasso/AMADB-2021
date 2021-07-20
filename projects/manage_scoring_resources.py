@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
-
+from NoSql.nosqldbhandler import NoSqlDbHandler
+from pandas import DataFrame, Series
 
 def manage_rl(
         file_path: Path,
@@ -30,6 +31,30 @@ def manage_rl(
             else:
                 neutral_list.append(word)
 
+def write_list_in_file (file_path: Path, w_list_neg: list,  w_list_pos: list,  w_list_ok: list) -> None:
+    """
+    Scrive i nuovi sentimenti sul file date le tre liste
+    """
+    print('Sto scrivendo i nuovi sentimenti in: ' + str(file_path))
+    sentiment_groupped = ["anger, disgust, fear, sadness", "joy, trust" , "anticipation, surprise"]
+    data = {
+        sentiment_groupped[0] : Series(w_list_neg),
+        sentiment_groupped[1] : Series(w_list_pos),
+        sentiment_groupped[2] : Series(w_list_ok)
+    }
+    df = DataFrame(data)
+    df.to_csv(file_path)
+    
+def manage_pos_neg(file_path : Path, output_list: list)  -> None:
+    """
+    Appendi alla lista output tutte le righe presenti nel file del percorso indicato
+    :param file_path: percorso del file da analizzare
+    :param output_list: lista su cui effettuare l'append 
+    """
+    with open(file_path , 'r') as f:
+        for line in f.readlines():
+            output_list.append(line.strip())
+
 
 def wrapper_manage_lr() -> None:
     """
@@ -42,18 +67,31 @@ def wrapper_manage_lr() -> None:
     neutral_list = []
 
     # popolazione delle tre liste a partire dai 3 file di input con score.
-    path_gen = Path('.') / 'data' / 'lexical-resources' / \
-        'Generic' / 'ConScore'
-    path1 = path_gen / 'afinn.txt'
-    path2 = path_gen / 'anewPleas_tab.tsv'
-    path3 = path_gen / 'Dal_Pleas.csv'
+    path_gen = Path('.') / 'data' / 'lexical-resources' / 'Generic' 
+    path_cs = path_gen / 'ConScore'
+    path1 = path_cs / 'afinn.txt'
+    path2 = path_cs / 'anewPleas_tab.tsv'
+    path3 = path_cs / 'Dal_Pleas.csv'
     manage_rl(path1, 0, 0, positive_list, negative_list, neutral_list)
     manage_rl(path2, 4.4, 5.5, positive_list, negative_list, neutral_list)
     manage_rl(path3, 1.8, 1.9, positive_list, negative_list, neutral_list)
 
-    print(Hello)
+    # popolazione delle liste negative con i txt delle cartelle Neg.
+    dataset_dir = path_gen / 'Neg'
+    for file_name in os.listdir(dataset_dir):
+        file_path_neg = dataset_dir / file_name
+        manage_pos_neg(file_path_neg, negative_list)
 
+    # popolazione delle liste positive con i txt delle cartelle Pos.
+    dataset_dir = path_gen / 'Pos'
+    for file_name in os.listdir(dataset_dir):
+        file_path_neg = dataset_dir / file_name
+        manage_pos_neg(file_path_neg, positive_list)
+
+    new_res_path = Path('.') / 'output' / 'sentiments_from_resources.csv'
+    write_list_in_file(new_res_path, negative_list, positive_list, neutral_list)
 
 if __name__ == "__main__":
     print("Sto gestendo le risorse lessicali con punteggio")
     wrapper_manage_lr()
+    print("Ho finito di gestire le risorse lessicali")
