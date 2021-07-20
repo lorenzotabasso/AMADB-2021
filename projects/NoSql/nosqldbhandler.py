@@ -1,6 +1,7 @@
 from typing import List
 from pymongo import MongoClient
 from pathlib import Path
+from bson.code import Code
 import os
 
 
@@ -298,3 +299,39 @@ class NoSqlDbHandler:
         
         return tweets
 
+    """
+    Map - Reduce Functional 
+    """
+
+    def word_frequencies(self, sentiment: str, size=None) -> None:
+        if size is None:
+            size = 20
+
+        map_func = Code("""
+            function () {
+                this.words.forEach(function (word) {
+                    emit(word, 1);
+                });
+            }
+        """)
+
+        red_func = Code("""
+            function(key, values) {
+                var sum = 0;
+
+                for(var i = 0; i < values.length; i++) {
+                    sum += values[i];
+                }
+
+                return sum;
+            }
+        """)
+
+        collection = self.__db[self.__COLLECTION_TWEETS]
+        
+        result = collection.map_reduce(map_func, red_func, "frequencies", query={'sentiment': sentiment})
+        words = []
+        for entry in result.find().sort('value', -1).limit(size):
+            words.append((entry['_id'], entry['value']))
+
+        return words
