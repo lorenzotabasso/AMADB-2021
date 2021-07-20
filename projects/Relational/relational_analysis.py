@@ -1,3 +1,4 @@
+import os
 from os import path
 from pathlib import Path
 import string
@@ -119,9 +120,11 @@ def print_all_word_clouds(db_interface: RelationalDbHandler) -> None:
 
 
 def stats_on_lexical_r(handler, all_sentiments):
+    d = defaultdict(list)
+
+    print('\tComputing statistics')
     for s in all_sentiments:
         lex_resources = handler.get_all_lex_resources_for_sentiment(s)
-        d = defaultdict(list)
 
         for lr in lex_resources:
             n_lex_words = handler.get_n_lex_words(lr)
@@ -131,14 +134,14 @@ def stats_on_lexical_r(handler, all_sentiments):
             perc_presence_lex_res = shared_words / n_lex_words
             perc_presence_twitter = shared_words / n_twitter_words
 
-            print("Statistics for S: {0}, LR: {1}".format(s, lr))
-            print("\tn_lex_words: {0}".format(n_lex_words))
-            print("\tn_twitter_words: {0}".format(n_twitter_words))
-            print("\tshared_words: {0}".format(shared_words))
-            print("\tperc_presence_lex_res: {0:.6f}".format(
-                perc_presence_lex_res))
-            print("\tperc_presence_twitter: {0:.6f}\n".format(
-                perc_presence_twitter))
+            # print("Statistics for S: {0}, LR: {1}".format(s, lr))
+            # print("\tn_lex_words: {0}".format(n_lex_words))
+            # print("\tn_twitter_words: {0}".format(n_twitter_words))
+            # print("\tshared_words: {0}".format(shared_words))
+            # print("\tperc_presence_lex_res: {0:.6f}".format(
+            #     perc_presence_lex_res))
+            # print("\tperc_presence_twitter: {0:.6f}\n".format(
+            #     perc_presence_twitter))
 
             d['sentiment'].append(s)
             d['lex_resource'].append(lr)
@@ -148,8 +151,16 @@ def stats_on_lexical_r(handler, all_sentiments):
             d['perc_presence_lex_res'].append(perc_presence_lex_res)
             d['perc_presence_twitter'].append(perc_presence_twitter)
 
-        df = pd.DataFrame(data=d).round(6)
-        ax = df.plot(title=s.capitalize(),
+    # Creiamo il Pandas DataFrame che conterrà i dati
+    df = pd.DataFrame(data=d).round(6)
+
+    print("\tSaving plot to disk")
+    for s in all_sentiments:
+        # Filtriamo il singolo sentimento usando Pandas
+        local_df = df.loc[df['sentiment'] == s]
+
+        # Per ogni sentimento, componiamo e salviamo l'istogramma
+        ax = local_df.plot(title=f'Relational - {s.capitalize()}',
                 x='lex_resource',
                 xlabel='Lexical Resource',
                 y=['perc_presence_lex_res', 'perc_presence_twitter'],
@@ -162,15 +173,29 @@ def stats_on_lexical_r(handler, all_sentiments):
         plt.legend(loc='upper left', bbox_to_anchor=(0.65, 1.15),
                    fancybox=True, shadow=True)
 
+        # Poniamo come label sulle barre dell'istogramma il valore della
+        # percentuale di perc_presence_lex_res e perc_presence_twitter
         for p in ax.patches:
             percentage_value = str(p.get_height())
             ax.annotate(percentage_value, (p.get_x() * 1.005, p.get_height() * 1.005))
 
-        # plt.show()
-
-        print("\tSaving plot to disk\n")
-        path_output = Path('.') / 'output' / 'histogram' / f'histogram_{s}.png'
+        print(f"\t\tSaving plot for sentiment {s}")
+        path_output = Path('.') / 'output' / 'histogram' / f'relational_histogram_{s}.png'
         plt.savefig(path_output)
+
+    # Preparazione del DataFrame per essere scritto sull'excel.
+    # Facciamo una copia per sicurezza.
+    df2 = pd.DataFrame(data=d).round(6)
+    df2.sort_values(by=['sentiment', 'lex_resource'], inplace=True)
+
+    print('\tWriting statistics.xlsx')
+    excel_output = 'output/statistics.xlsx'
+    if os.path.isfile(excel_output):
+        with pd.ExcelWriter(excel_output, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+            df2.to_excel(writer, sheet_name='relational')
+    else:
+        with pd.ExcelWriter(excel_output, mode='w') as writer:
+            df2.to_excel(writer, sheet_name='relational')
 
 
 def build_new_resource(handler: RelationalDbHandler, resource_path: Path) -> None:
@@ -203,8 +228,8 @@ if __name__ == '__main__':
     stats_on_lexical_r(handler, all_sentiments)
 
     print("\nCreating word cloud for each sentiment")
-    print_all_word_clouds(handler)
+    #print_all_word_clouds(handler)
 
     print("\nStoring new sentiments")
-    new_res_path = Path('.') / 'output' / 'new_sentiments.csv'
-    build_new_resource(handler, new_res_path)
+    #new_res_path = Path('.') / 'output' / 'new_sentiments.csv'
+    #build_new_resource(handler, new_res_path)
