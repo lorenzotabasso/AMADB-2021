@@ -91,8 +91,7 @@ def world_cloud(db_interface: RelationalDbHandler, sentiment: str, token_type: i
     if token_type == 0:
         tokens = tokens[5:]
     save_word_cloud(tokens, sentiment, token_type)
-    print(
-        f"\tSaved word cloud for sentiment {sentiment}: {MAP_TOKEN_TYPE[token_type]}")
+    print(f"\tSalvo la word cloud per il sentimento {sentiment}: {MAP_TOKEN_TYPE[token_type]}")
 
 
 def print_all_word_clouds(db_interface: RelationalDbHandler) -> None:
@@ -112,49 +111,50 @@ def print_all_word_clouds(db_interface: RelationalDbHandler) -> None:
                       NUM_HASHTAG_WC]
 
     for sentiment in sentiments:
-        print(
-            f"\nFinding first 50 most present tokens for sentiment {sentiment}")
+        print(f"\nCerco i 50 token più presenti per il sentimento {sentiment}")
         for i in range(len(token_types)):
             world_cloud(db_interface, sentiment,
                         token_types[i], num_word_cloud[i])
 
 
-def stats_on_lexical_r(handler, all_sentiments):
+def stats_on_lexical_r(handler):
     d = defaultdict(list)
 
-    print('\tComputing statistics')
-    for s in all_sentiments:
-        lex_resources = handler.get_all_lex_resources_for_sentiment(s)
+    shared_words_for_lr = handler.get_shared_words()
+    # formato [ ('anger', 'EmoSN_anger', 201) ...]
 
-        for lr in lex_resources:
-            n_lex_words = handler.get_n_lex_words(lr)
-            n_twitter_words = handler.get_n_twitter_words(s)
-            shared_words = handler.get_shared_words(lr, s)
+    # Ci servirà dopo
+    all_sentiments = []
+    for row in shared_words_for_lr:
+        # row[0] = sentiment
+        if row[0] not in all_sentiments:
+            all_sentiments.append(row[0])
 
-            perc_presence_lex_res = shared_words / n_lex_words
-            perc_presence_twitter = shared_words / n_twitter_words
+    for i in range(len(shared_words_for_lr)):
+        s = shared_words_for_lr[i][0]
+        lr = shared_words_for_lr[i][1]
+        sw = shared_words_for_lr[i][2]
 
-            # print("Statistics for S: {0}, LR: {1}".format(s, lr))
-            # print("\tn_lex_words: {0}".format(n_lex_words))
-            # print("\tn_twitter_words: {0}".format(n_twitter_words))
-            # print("\tshared_words: {0}".format(shared_words))
-            # print("\tperc_presence_lex_res: {0:.6f}".format(
-            #     perc_presence_lex_res))
-            # print("\tperc_presence_twitter: {0:.6f}\n".format(
-            #     perc_presence_twitter))
+        print(f"\tSentimento: {s} - Risorsa lessicale: {lr}")
+        n_lex_words = handler.get_n_lex_words(lr)
+        n_twitter_words = handler.get_n_twitter_words(s)
+        print(f"\t\tCalcolate n_lex_words e n_twitter_words")
 
-            d['sentiment'].append(s)
-            d['lex_resource'].append(lr)
-            d['n_lex_words'].append(n_lex_words)
-            d['n_twitter_words'].append(n_twitter_words)
-            d['shared_words'].append(shared_words)
-            d['perc_presence_lex_res'].append(perc_presence_lex_res)
-            d['perc_presence_twitter'].append(perc_presence_twitter)
+        perc_presence_lex_res = sw / n_lex_words
+        perc_presence_twitter = sw / n_twitter_words
+
+        d['sentiment'].append(s)
+        d['lex_resource'].append(lr)
+        d['n_lex_words'].append(n_lex_words)
+        d['n_twitter_words'].append(n_twitter_words)
+        d['shared_words'].append(sw)
+        d['perc_presence_lex_res'].append(perc_presence_lex_res)
+        d['perc_presence_twitter'].append(perc_presence_twitter)
 
     # Creiamo il Pandas DataFrame che conterrà i dati
     df = pd.DataFrame(data=d).round(6)
 
-    print("\tSaving plot to disk")
+    print("\tSalvo il plot su disco")
     for s in all_sentiments:
         # Filtriamo il singolo sentimento usando Pandas
         local_df = df.loc[df['sentiment'] == s]
@@ -179,7 +179,7 @@ def stats_on_lexical_r(handler, all_sentiments):
             percentage_value = str(p.get_height())
             ax.annotate(percentage_value, (p.get_x() * 1.005, p.get_height() * 1.005))
 
-        print(f"\t\tSaving plot for sentiment {s}")
+        print(f"\t\tSalvo il plot per il sentimento {s}")
         path_output = Path('.') / 'output' / 'histogram' / f'relational_histogram_{s}.png'
         plt.savefig(path_output)
 
@@ -188,7 +188,7 @@ def stats_on_lexical_r(handler, all_sentiments):
     df2 = pd.DataFrame(data=d).round(6)
     df2.sort_values(by=['sentiment', 'lex_resource'], inplace=True)
 
-    print('\tWriting statistics.xlsx')
+    print('\tScrivo il file statistics.xlsx')
     excel_output = 'output/statistics.xlsx'
     if os.path.isfile(excel_output):
         with pd.ExcelWriter(excel_output, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
@@ -207,7 +207,7 @@ def build_new_resource(handler: RelationalDbHandler, resource_path: Path) -> Non
     :param resource_path: percorso nella cartella
     :type resource_path: Path
     """
-    print("Building new resource")
+    print("Costruisco la risorsa che conterrà i nuovi sentimenti")
     s_list = handler.get_sentiments()
     new_resources = pd.DataFrame(columns=s_list)
 
@@ -215,21 +215,21 @@ def build_new_resource(handler: RelationalDbHandler, resource_path: Path) -> Non
         new_words = handler.new_words(sentiment)
         new_resources[sentiment] = pd.Series(new_words)
 
+    print("Salvo il file new_sentiments.csv")
     new_resources.to_csv(resource_path)
-    print("Done")
 
 
 if __name__ == '__main__':
     handler = RelationalDbHandler()
 
-    all_sentiments = handler.get_all_sentiments()
+    #all_sentiments = handler.get_all_sentiments()
 
-    print("Compute statistics on resources")
-    stats_on_lexical_r(handler, all_sentiments)
+    print("Calcolo le statistiche sulle risorse")
+    stats_on_lexical_r(handler) # all_sentiments
 
-    print("\nCreating word cloud for each sentiment")
+    print("\nCreazione di una word cloud per ogni sentimento")
     #print_all_word_clouds(handler)
 
-    print("\nStoring new sentiments")
+    print("\nSalvo i nuovi sentimenti")
     #new_res_path = Path('.') / 'output' / 'new_sentiments.csv'
     #build_new_resource(handler, new_res_path)

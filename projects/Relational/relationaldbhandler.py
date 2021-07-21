@@ -541,7 +541,7 @@ class RelationalDbHandler:
         # La struttura è del formato [(354,)], per questo il [0][0] finale
         return result[0][0]
 
-    def get_shared_words(self, lex_resource, sentiment) -> int:
+    def get_shared_words(self, lex_resource=None, sentiment=None) -> int:
         """
         Ritorna il numero di parole in comune tra la risorsa lessicale e il sentimento.
         :param lex_resource: risorsa lessicale in input
@@ -549,16 +549,13 @@ class RelationalDbHandler:
         :return: conteggio delle parole in comune tra la risorsa lessicale e l'input.
         """
 
-        statement = "SELECT COUNT(t.id) \
-                    FROM token t JOIN in_resource ir ON t.id = ir.token_id \
-                    JOIN lexical_resource lr ON ir.lexical_resource_id = lr.id \
-                    AND lr.name = '{}' \
-                    WHERE t.id IN \
-                    (SELECT t.id \
-                    FROM token t JOIN contained_in ci ON t.id = ci.token_id \
-                    JOIN tweet tw ON ci.id = tw.id \
-                    JOIN sentiment s ON tw.sentiment_id = s.name \
-                    AND s.name = '{}');".format(lex_resource, sentiment)
+        statement = "SELECT lexical_resource.sentiment_id, lexical_resource.name, COUNT(DISTINCT(in_resource.token_id)) \
+                    FROM lexical_resource join in_resource on lexical_resource.id = in_resource.lexical_resource_id \
+                           join token on token.id = in_resource.token_id \
+                           join contained_in on contained_in.token_id = token.id \
+                           join tweet on tweet.id = contained_in.tweet_id \
+                    WHERE token.type = 0 AND lexical_resource.sentiment_id = tweet.sentiment_id \
+                    GROUP BY lexical_resource.sentiment_id, lexical_resource.name;"
 
         self.__open_connection(self.DB_NAME)
         self.__cursor.execute(statement)
@@ -568,8 +565,7 @@ class RelationalDbHandler:
         self.__db.commit()
         self.__close_connection()
 
-        # La struttura è del formato [(354,)], per questo il [0][0] finale
-        return result[0][0]
+        return result
 
     def new_words(self, sentiment: str) -> list:
         """

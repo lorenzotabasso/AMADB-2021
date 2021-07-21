@@ -19,16 +19,19 @@ if __name__ == '__main__':
 
     # Calcoliamo prima il numero totale di tweet per ogni sentimento,
     # ci servirà dopo
-    print("Computing number of tweets for each sentiment")
+    print("Calcolo il numero di parole di ogni dataset di tweet relativo a un sentimento")
     tweets_for_sentiment = {}
     for i in range(len(tweets)):
+        # tweets fotmat:
+        # ('fear', ['taylor', 'kept', 'throwing', 'ball', 'gutter', 'get', 'strike', 'whatt'])
+
         sentiment = tweets[i][0]
         if sentiment not in tweets_for_sentiment:
-            tweets_for_sentiment[sentiment] = 0
+            tweets_for_sentiment[sentiment] = len(tweets[i][1])
         else:
-            tweets_for_sentiment[sentiment] += 1
+            tweets_for_sentiment[sentiment] += len(tweets[i][1])
 
-    print("Computing statistics")
+    print("\nCalcolo le statistiche sulle risorse")
     for lr in lexical_resource:
         # Ricordiamo che il formato di lr è:
         # ('NRC_fear', 'fear', ['dementia', 'barbarian', 'bane', ...])
@@ -98,7 +101,7 @@ if __name__ == '__main__':
             percentage_value = str(p.get_height())
             ax.annotate(percentage_value, (p.get_x() * 1.005, p.get_height() * 1.005))
 
-        print(f"Saving plot for sentiment {s}")
+        print(f"\tSalvo il plot del sentimento {s}")
         path_output = Path('.') / 'output' / 'histogram' / f'nosql_histogram_{s}.png'
         plt.savefig(path_output)
 
@@ -107,7 +110,7 @@ if __name__ == '__main__':
     df2 = pd.DataFrame(data=d).round(6)
     df2.sort_values(by=['sentiment', 'lex_resource'], inplace=True)
 
-    print('Writing statistics.xlsx')
+    print('\nScrivo il file statistics.xlsx')
     excel_output = 'output/statistics.xlsx'
     if os.path.isfile(excel_output):
         # Se il file è stato creato in precedenza, ci appendiamo e aggiorniamo il foglio
