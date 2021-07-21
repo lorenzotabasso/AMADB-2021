@@ -158,6 +158,7 @@ def stats_on_lexical_r(handler):
     for s in all_sentiments:
         # Filtriamo il singolo sentimento usando Pandas
         local_df = df.loc[df['sentiment'] == s]
+        local_df.sort_values(by=['sentiment', 'lex_resource'], inplace=True)
 
         # Per ogni sentimento, componiamo e salviamo l'istogramma
         ax = local_df.plot(title=f'Relational - {s.capitalize()}',
