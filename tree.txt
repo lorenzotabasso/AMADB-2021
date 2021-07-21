@@ -1,0 +1,174 @@
++---data
+|   |   descrizione-lessici-e-dataset-per-corso-LabDB.pdf
+|   |   Ide_et_al_cicling13.pdf
+|   |   mariadb.sql
+|   |   
+|   +---lexical-resources
+|   |   |   elenco-parole-che-negano-parole-successive.txt
+|   |   |   
+|   |   +---Generic
+|   |   |   +---ConScore
+|   |   |   |       afinn.txt
+|   |   |   |       anewAro_tab.tsv
+|   |   |   |       anewDom_tab.tsv
+|   |   |   |       anewPleas_tab.tsv
+|   |   |   |       Dal_Activ.csv
+|   |   |   |       Dal_Imag.csv
+|   |   |   |       Dal_Pleas.csv
+|   |   |   |       
+|   |   |   +---Hope
+|   |   |   |       sentisense_hope.txt
+|   |   |   |       
+|   |   |   +---Like-Love
+|   |   |   |       sentisense_like.txt
+|   |   |   |       sentisense_love.txt
+|   |   |   |       
+|   |   |   +---Neg
+|   |   |   |       GI_NEG.txt
+|   |   |   |       HL-negatives.txt
+|   |   |   |       listNegEffTerms.txt
+|   |   |   |       LIWC-NEG.txt
+|   |   |   |       
+|   |   |   \---Pos
+|   |   |           GI_POS.txt
+|   |   |           HL-positives.txt
+|   |   |           listPosEffTerms.txt
+|   |   |           LIWC-POS.txt
+|   |   |           
+|   |   \---Sentiments
+|   |       +---Anger
+|   |       |       EmoSN_anger.txt
+|   |       |       NRC_anger.txt
+|   |       |       sentisense_anger.txt
+|   |       |       
+|   |       +---Anticipation
+|   |       |       NRC_anticipation.txt
+|   |       |       sentisense_anticipation.txt
+|   |       |       
+|   |       +---Disgust
+|   |       |       NRC_disgust.txt
+|   |       |       sentisense_disgust.txt
+|   |       |       sentisense_hate.txt
+|   |       |       
+|   |       +---Fear
+|   |       |       NRC_fear.txt
+|   |       |       sentisense_fear.txt
+|   |       |       
+|   |       +---Joy
+|   |       |       EmoSN_joy.txt
+|   |       |       NRC_joy.txt
+|   |       |       sentisense_joy.txt
+|   |       |       
+|   |       +---Sadness
+|   |       |       NRC_sadness.txt
+|   |       |       sentisense_sadness.txt
+|   |       |       
+|   |       +---Surprise
+|   |       |       NRC_surprise.txt
+|   |       |       sentisense_surprise.txt
+|   |       |       
+|   |       \---Trust
+|   |               NRC_trust.txt
+|   |               
+|   +---processing
+|   |       emoji.json
+|   |       emoticons.json
+|   |       Penn Treebank P.O.S. Tags.html
+|   |       Penn Treebank P.O.S. Tags.png
+|   |       punctuation.txt
+|   |       sentiment2emo.json
+|   |       slang_words.json
+|   |       
+|   \---twitter-messages
+|           dataset_dt_anger_60k.txt
+|           dataset_dt_anticipation_60k.txt
+|           dataset_dt_disgust_60k.txt
+|           dataset_dt_fear_60k.txt
+|           dataset_dt_joy_60k.txt
+|           dataset_dt_sadness_60k.txt
+|           dataset_dt_surprise_60k.txt
+|           dataset_dt_trust_60k.txt
+|           
++---docs
+|       conceptual-schema-data-project.pdf
+|       Traccia progetto MAADB.pdf
+|       
++---font
+|       symbola.ttf
+|       
++---output
+|   |   new_sentiments.csv
+|   |   sentiments_from_resources.csv
+|   |   
+|   +---histogram
+|   |       histogram_anger.png
+|   |       histogram_anticipation.png
+|   |       histogram_disgust.png
+|   |       histogram_fear.png
+|   |       histogram_joy.png
+|   |       histogram_sadness.png
+|   |       histogram_surprise.png
+|   |       histogram_trust.png
+|   |       
+|   \---wordcloud
+|       +---emoji
+|       |       cloud_anger_emoji.png
+|       |       cloud_anticipation_emoji.png
+|       |       cloud_disgust_emoji.png
+|       |       cloud_fear_emoji.png
+|       |       cloud_joy_emoji.png
+|       |       cloud_sadness_emoji.png
+|       |       cloud_surprise_emoji.png
+|       |       cloud_trust_emoji.png
+|       |       
+|       +---emoticon
+|       |       cloud_anger_emoticon.png
+|       |       cloud_anticipation_emoticon.png
+|       |       cloud_disgust_emoticon.png
+|       |       cloud_fear_emoticon.png
+|       |       cloud_joy_emoticon.png
+|       |       cloud_sadness_emoticon.png
+|       |       cloud_surprise_emoticon.png
+|       |       cloud_trust_emoticon.png
+|       |       
+|       +---hashtag
+|       |       cloud_anger_hashtag.png
+|       |       cloud_anticipation_hashtag.png
+|       |       cloud_disgust_hashtag.png
+|       |       cloud_fear_hashtag.png
+|       |       cloud_joy_hashtag.png
+|       |       cloud_sadness_hashtag.png
+|       |       cloud_surprise_hashtag.png
+|       |       cloud_trust_hashtag.png
+|       |       
+|       \---word
+|               cloud_anger_word.png
+|               cloud_anticipation_word.png
+|               cloud_disgust_word.png
+|               cloud_fear_word.png
+|               cloud_joy_word.png
+|               cloud_sadness_word.png
+|               cloud_surprise_word.png
+|               cloud_trust_word.png
+|               
+\---projects
+    |   manage_scoring_resources.py
+    |   test.py
+    |   
+    +---NoSql
+    |   |   .gitignore
+    |   |   common_words.py
+    |   |   noslq_preproccesing.py
+    |   |   nosqldbhandler.py
+    |   |   nosql_analysis.py
+    |   |   nosql_create.py
+    |   |   nosql_test.py
+    |           
+    \---Relational
+        |   relationaldbhandler.py
+        |   relational_analysis.py
+        |   relational_create.py
+        |   relational_preprocessing.py
+        |   relational_test.py
+        
+                
