@@ -36,14 +36,14 @@ def fill_common_words(lexical_resource: list, tweets: list, c_words: list) -> li
 if __name__ == "__main__":
     handler = NoSqlDbHandler()
 
-    print("Dropping common words from DB")
+    print("Drop della collezione Common Words dal DB")
     handler.drop_common_words()
 
     start = time.time()
 
-    print("Getting lexical_resources from DB")
+    print("Ottengo le risorse lessicali dal DB")
     lexical_resource = handler.get_lexical_resources()
-    print("Getting tweets from DB")
+    print("Ottengo i tweets dal DB")
     tweets = handler.get_tweets()
 
     # Nota: lexical resource è già una lista di tuple, del tipo
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     empty_common_words = [(lr[0], lr[1], []) for lr in lexical_resource]
 
     # Calcolo delle common words tra le risorse lessicali e i tweets
-    print("Computing common words")
+    print("Calcolo le common words")
     common_w = fill_common_words(lexical_resource, tweets, empty_common_words)
 
     # Conversione nelle classe Common_words per effettuare il caricamento nel DB
@@ -63,9 +63,9 @@ if __name__ == "__main__":
         map(lambda x: Common_words(x[0], x[1], x[2]), common_w))
 
     # Caricamento delle common words nel db
-    print("Loading common words into DB")
+    print("Carico le common words nel DB")
     handler.load_common_words(common_words_class)
 
     end = time.time()
 
-    print('Common_words total creation time: {:.2f} seconds'.format(end - start))
+    print('Tempo totale di creazione delle common words: {:.2f} secondi'.format(end - start))

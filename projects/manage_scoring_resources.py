@@ -1,7 +1,7 @@
 from pathlib import Path
 import os
-from NoSql.nosqldbhandler import NoSqlDbHandler
 from pandas import DataFrame, Series
+
 
 def manage_rl(
         file_path: Path,
@@ -31,6 +31,7 @@ def manage_rl(
             else:
                 neutral_list.append(word)
 
+
 def write_list_in_file (file_path: Path, w_list_neg: list,  w_list_pos: list,  w_list_ok: list) -> None:
     """
     Scrive i nuovi sentimenti sul file date le tre liste
@@ -44,7 +45,8 @@ def write_list_in_file (file_path: Path, w_list_neg: list,  w_list_pos: list,  w
     }
     df = DataFrame(data)
     df.to_csv(file_path)
-    
+
+
 def manage_pos_neg(file_path : Path, output_list: list)  -> None:
     """
     Appendi alla lista output tutte le righe presenti nel file del percorso indicato
@@ -90,6 +92,7 @@ def wrapper_manage_lr() -> None:
 
     new_res_path = Path('.') / 'output' / 'sentiments_from_resources.csv'
     write_list_in_file(new_res_path, negative_list, positive_list, neutral_list)
+
 
 if __name__ == "__main__":
     print("Sto gestendo le risorse lessicali con punteggio")
