@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 from matplotlib import pyplot as plt
 
-from projects.NoSql.nosqldbhandler import NoSqlDbHandler
+from nosqldbhandler import NoSqlDbHandler
 
 if __name__ == '__main__':
     handler = NoSqlDbHandler()

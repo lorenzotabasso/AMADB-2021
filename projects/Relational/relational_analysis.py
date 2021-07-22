@@ -131,9 +131,7 @@ def stats_on_lexical_r(handler):
             all_sentiments.append(row[0])
 
     for i in range(len(shared_words_for_lr)):
-        s = shared_words_for_lr[i][0]
-        lr = shared_words_for_lr[i][1]
-        sw = shared_words_for_lr[i][2]
+        s, lr , sw = shared_words_for_lr[i]
 
         print(f"\tSentimento: {s} - Risorsa lessicale: {lr}")
         n_lex_words = handler.get_n_lex_words(lr)
@@ -229,8 +227,8 @@ if __name__ == '__main__':
     stats_on_lexical_r(handler) # all_sentiments
 
     print("\nCreazione di una word cloud per ogni sentimento")
-    #print_all_word_clouds(handler)
+    print_all_word_clouds(handler)
 
     print("\nSalvo i nuovi sentimenti")
-    #new_res_path = Path('.') / 'output' / 'new_sentiments.csv'
-    #build_new_resource(handler, new_res_path)
+    new_res_path = Path('.') / 'output' / 'new_sentiments.csv'
+    build_new_resource(handler, new_res_path)
