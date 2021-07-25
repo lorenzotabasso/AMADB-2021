@@ -1,6 +1,5 @@
 import json
 import sys
-import emoji
 import mysql.connector
 from pathlib import Path
 from sys import stderr
@@ -35,6 +34,17 @@ class RelationalDbHandler:
         Apre la connessione al database e istanza un oggetto MySQLCursor,
         eventualmente anche selezionando il database fornito in input.
         """
+
+        """
+        Non sappiamo perché, ma su Windows, l'esecuzione di questa classe
+        e dei suoi metodi richiede che il charset sia settato a "utf8mb4",
+        mentre in MacOS, per l'esecuzione di questa classe NON deve essere 
+        settato a "utf8mb4". Non abbiamo approfondito perche non avevamo tempo.
+        
+        Per cui, ricordarsi, priam di eseguire questa classe e i suoi metodi di
+        aggiustare la codifica!
+        """
+
         try:
             if database_name is not None and type(database_name) == str:
                 self.__db = mysql.connector.connect(
@@ -42,14 +52,14 @@ class RelationalDbHandler:
                     user=self.DB_USER,
                     password=self.DB_PASS,
                     database=database_name,
-                    charset="utf8mb4"
+                    #charset="utf8mb4"  # See the comment above
                 )
             else:
                 self.__db = mysql.connector.connect(
                     host=self.DB_HOST,
                     user=self.DB_USER,
                     password=self.DB_PASS,
-                    charset="utf8mb4"
+                    #charset="utf8mb4"  # See the comment above
                 )
         except mysql.connector.Error as err:
             print(err, file=stderr)
