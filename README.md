@@ -1,6 +1,6 @@
-# Progetto Unito MAADB
+# AMADB (Advanced Models and Architectures for DBs) Project
 
-Repository for the MAADB exam's projects, session 2020-2021. Developed with love by Damiano Gianotti and Lorenzo Tabasso.
+Repository for the AMADB (Advanced Models and Architectures for DBs) exam's projects, session 2020-2021. Developed with love by Damiano Gianotti and Lorenzo Tabasso.
 
 ## Installation
 
